@@ -6578,10 +6578,9 @@ async function protectPDF(tool) {
         return; 
     }
 
-    // const password = document.getElementById('protectPassword')?.value?.trim();
-    // const confirmPassword = document.getElementById('protectConfirmPassword')?.value?.trim();
-    const password = document.getElementById('encryptPassword')?.value?.trim();
-const confirmPassword = document.getElementById('encryptConfirmPassword')?.value?.trim();
+    const inputs = document.querySelectorAll('#protectOptions input[type="password"]');
+    const password = inputs[0]?.value?.trim();
+    const confirmPassword = inputs[1]?.value?.trim();
 
     console.log('1. Password from input:', password);
 
@@ -6598,17 +6597,9 @@ const confirmPassword = document.getElementById('encryptConfirmPassword')?.value
         return;
     }
 
-    // Make sure fileObj is a File
     if (!(fileObj instanceof File)) {
         console.error('❌ fileStorage[tool] is not a File object:', fileObj);
         showToast('Selected file is invalid.', 'error');
-        return;
-    }
-
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        showToast('Please login to protect PDFs', 'warning');
-        openAuthModal('login');
         return;
     }
 
@@ -6618,12 +6609,10 @@ const confirmPassword = document.getElementById('encryptConfirmPassword')?.value
     try {
         showToast('Encrypting PDF with password...', 'info');
 
-        // --- Create FormData ---
         const formData = new FormData();
         formData.append('file', fileObj, fileObj.name);
         formData.append('password', password);
 
-        // Debug: list FormData entries
         console.log('2. FormData contents:');
         for (const [key, value] of formData.entries()) {
             if (key === 'file') {
@@ -6633,29 +6622,13 @@ const confirmPassword = document.getElementById('encryptConfirmPassword')?.value
             }
         }
 
-        // --- Send request ---
         const response = await fetch('http://localhost:3009/api/protect-pdf', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}` // DO NOT set Content-Type manually
-            },
+            headers: {},
             body: formData
         });
 
         console.log('3. Response status:', response.status);
-
-        // --- Handle authentication errors ---
-        if (response.status === 401 || response.status === 403) {
-            const error = await response.json().catch(() => ({ error: 'Authentication failed' }));
-            console.log('Auth error:', error);
-            showToast('Authentication failed. Please login again.', 'warning');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-            openAuthModal('login');
-            hideProgress(tool);
-            document.getElementById(tool + 'Btn').disabled = false;
-            return;
-        }
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -6694,11 +6667,9 @@ IMPORTANT:
         hideProgress(tool);
         showToast('PDF encrypted with password!', 'success');
 
-        // Clear selected file & inputs
         fileStorage[tool] = null;
         displayFiles(tool);
-        document.getElementById('protectPassword').value = '';
-        document.getElementById('protectConfirmPassword').value = '';
+        document.querySelectorAll('#protectOptions input[type="password"]').forEach(i => i.value = '');
 
     } catch (error) {
         console.error('6. Protect PDF error:', error);
@@ -6731,7 +6702,7 @@ async function testUpload(tool = 'protect') {
 
     const response = await fetch('http://localhost:3009/api/test-upload', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {},
         body: formData
     });
 
@@ -6742,16 +6713,15 @@ async function testUpload(tool = 'protect') {
 
 
 
-
-
+// unprotected pdf
 async function unprotectPDF(tool) {
     const fileObj = fileStorage[tool];
-    if (!fileObj) { showToast('Please select a PDF file.', 'error'); return; }
+    if (!fileObj) { 
+        showToast('Please select a PDF file.', 'error'); 
+        return; 
+    }
 
     const password = document.getElementById('unlockPassword')?.value?.trim() || '';
-
-    const token = localStorage.getItem('authToken');
-    if (!token) { showToast('Please login to unlock PDFs', 'warning'); openAuthModal('login'); return; }
 
     showProgress(tool, 10);
     document.getElementById(tool + 'Btn').disabled = true;
@@ -6763,15 +6733,9 @@ async function unprotectPDF(tool) {
 
         const response = await fetch('http://localhost:3009/api/unprotect-pdf', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers: {},
             body: formData
         });
-
-        if (response.status === 401 || response.status === 403) {
-            showToast('Session expired. Please login again.', 'warning');
-            openAuthModal('login');
-            return;
-        }
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({ error: 'Failed' }));
@@ -6781,7 +6745,15 @@ async function unprotectPDF(tool) {
         updateProgress(tool, 80);
         const blob = await response.blob();
         const filename = fileObj.name.replace('.pdf', '-unlocked.pdf');
-        showResult(tool, blob, filename, 'PDF unlocked successfully! Password protection removed.');
+
+        showResult(tool, blob, filename, `
+PDF UNLOCKED SUCCESSFULLY
+═══════════════════════════════════
+
+File: ${fileObj.name}
+
+✅ Password protection has been removed!
+        `);
         showToast('PDF password removed!', 'success');
 
         fileStorage[tool] = null;
@@ -6796,6 +6768,8 @@ async function unprotectPDF(tool) {
     hideProgress(tool);
     document.getElementById(tool + 'Btn').disabled = false;
 }
+
+const unlockPDF = unprotectPDF;
 
 // Alias so both tool names work
 // ──────────────────────────────────────────────────────────────
@@ -6813,7 +6787,7 @@ async function checkPDFEncryption(tool) {
  
         const response = await fetch(`${API_BASE}/api/check-pdf-encryption`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers: {},
             body: formData
         });
  
@@ -6832,20 +6806,29 @@ async function checkPDFEncryption(tool) {
         return null;
     }
 }
-// encrypted pdf
 async function encryptPDF(tool) {
     const fileObj = fileStorage[tool];
-    if (!fileObj) { showToast('Please select a PDF file.', 'error'); return; }
+    if (!fileObj) { 
+        showToast('Please select a PDF file.', 'error'); 
+        return; 
+    }
 
-    const password = document.getElementById('protectPassword')?.value?.trim();
-    const confirmPassword = document.getElementById('protectConfirmPassword')?.value?.trim();
+    const inputs = document.querySelectorAll('#encryptOptions input[type="password"]');
+    const password = inputs[0]?.value?.trim();
+    const confirmPassword = inputs[1]?.value?.trim();
 
-    if (!password) { showToast('Please enter a password.', 'error'); return; }
-    if (password !== confirmPassword) { showToast('Passwords do not match.', 'error'); return; }
-    if (password.length < 4) { showToast('Password must be at least 4 characters.', 'error'); return; }
-
-    const token = localStorage.getItem('authToken');
-    if (!token) { showToast('Please login to encrypt PDFs', 'warning'); openAuthModal('login'); return; }
+    if (!password) { 
+        showToast('Please enter a password.', 'error'); 
+        return; 
+    }
+    if (password !== confirmPassword) { 
+        showToast('Passwords do not match.', 'error'); 
+        return; 
+    }
+    if (password.length < 4) { 
+        showToast('Password must be at least 4 characters.', 'error'); 
+        return; 
+    }
 
     showProgress(tool, 10);
     document.getElementById(tool + 'Btn').disabled = true;
@@ -6857,14 +6840,10 @@ async function encryptPDF(tool) {
 
         const response = await fetch('http://localhost:3009/api/protect-pdf', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers: {},
             body: formData
         });
 
-        if (response.status === 401 || response.status === 403) {
-            showToast('Session expired. Please login again.', 'warning');
-            openAuthModal('login'); return;
-        }
         if (!response.ok) {
             const err = await response.json().catch(() => ({ error: 'Failed' }));
             throw new Error(err.error || 'Failed to encrypt PDF');
@@ -6873,13 +6852,26 @@ async function encryptPDF(tool) {
         updateProgress(tool, 80);
         const blob = await response.blob();
         const filename = fileObj.name.replace('.pdf', '-encrypted.pdf');
-        showResult(tool, blob, filename, 'PDF encrypted successfully with password!');
+
+        showResult(tool, blob, filename, `
+PDF ENCRYPTED SUCCESSFULLY
+═══════════════════════════════════
+
+File: ${fileObj.name}
+Password: ${password}
+
+IMPORTANT:
+- This PDF is now PASSWORD PROTECTED
+- You will need to enter the password to open it
+- Keep this password safe!
+
+✅ Real encryption applied successfully!
+        `);
         showToast('PDF encrypted!', 'success');
 
         fileStorage[tool] = null;
         displayFiles(tool);
-        document.getElementById('encryptPassword').value = '';
-document.getElementById('encryptConfirmPassword').value = '';
+        inputs.forEach(i => i.value = '');
 
     } catch (error) {
         showToast('Error: ' + error.message, 'error');
@@ -6888,7 +6880,6 @@ document.getElementById('encryptConfirmPassword').value = '';
     hideProgress(tool);
     document.getElementById(tool + 'Btn').disabled = false;
 }
-const unlockPDF = unprotectPDF;
 
 // ==================== COMPLETE: ADD SIGNATURE ====================
 async function addSignature(tool) {
@@ -13571,6 +13562,8 @@ document.addEventListener('change', function(e) {
 
         // Main process function
         async function processTool(tool) {
+             // Log tool use to admin history
+    logToolActivity(tool);
             const processors = {
                 'merge': mergePDFs,
                 'split': splitPDF,
@@ -13584,7 +13577,7 @@ document.addEventListener('change', function(e) {
                 'protect': protectPDF,
                 'unlock': async (tool) => unprotectPDF(tool),
                 'redact': redactPDF,
-                'encrypt': protectPDF,       // ✅ CHANGE THIS from protectPDF to encryptPDF
+                'encrypt': encryptPDF,      // ✅ CHANGE THIS from protectPDF to encryptPDF
                 'metadata': editMetadata,
                 'digital-signature': addSignature,
                 'jpg-to-pdf': imagesToPDF,
@@ -14475,6 +14468,23 @@ window.downloadFile = function(fileId, fileName, tool, format) {
         originalDownloadFile(fileId, fileName, tool);
     }
 };
+
+function logToolActivity(tool) {
+    const fileObj = fileStorage[tool];
+    const filename = fileObj?.name || '';
+    const filesize = fileObj?.size || 0;
+
+    fetch('http://localhost:3009/api/log-tool', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            tool: tool,
+            filename: filename,
+            filesize: filesize,
+            email: JSON.parse(localStorage.getItem('user') || '{}')?.email || 'guest'
+        })
+    }).catch(() => {}); // silent fail — don't block the tool
+}
 
 
 

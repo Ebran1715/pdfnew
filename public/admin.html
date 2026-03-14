@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — PDFWorks</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:#f4f5f7;--surface:#ffffff;--border:#e2e4e9;--border2:#ced0d6;
+    --accent:#3d3d3d;--accent2:#6b7280;--green:#16a34a;--blue:#2563eb;
+    --red:#dc2626;--purple:#7c3aed;--text:#111827;--muted:#6b7280;
+    --shadow:0 1px 3px rgba(0,0,0,0.08);--shadow-md:0 4px 12px rgba(0,0,0,0.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* LOGIN */
+  #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+  .login-wrap{width:420px;}
+  .login-logo{text-align:center;margin-bottom:32px;}
+  .login-logo .icon{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:var(--text);border-radius:14px;margin-bottom:12px;font-size:22px;}
+  .login-logo h1{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.3px;}
+  .login-logo p{font-size:13px;color:var(--muted);margin-top:3px;}
+  .login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;box-shadow:var(--shadow-md);}
+  .login-box label{display:block;font-size:13px;font-weight:600;color:var(--accent);margin-bottom:6px;}
+  .login-box input{width:100%;padding:10px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:16px;outline:none;transition:border-color 0.15s;}
+  .login-box input:focus{border-color:var(--accent);background:#fff;}
+  .login-box button{width:100%;padding:11px;background:var(--text);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.15s;margin-top:4px;}
+  .login-box button:hover{background:#2a2a2a;}
+  #loginError{color:var(--red);font-size:12px;margin-top:10px;display:none;text-align:center;}
+
+  /* DASHBOARD */
+  #dashboard{display:none;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+  .header-inner{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;}
+  .header-left{display:flex;align-items:center;gap:10px;}
+  .header-logo{display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:var(--text);border-radius:8px;font-size:14px;color:#fff;}
+  .header-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.2px;}
+  .header-divider{width:1px;height:18px;background:var(--border);margin:0 6px;}
+  .header-sub{font-size:12px;color:var(--muted);}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  #adminEmail{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--bg);padding:5px 10px;border-radius:6px;border:1px solid var(--border);}
+  .btn-logout{padding:6px 14px;background:transparent;border:1px solid var(--border2);border-radius:7px;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+  .btn-logout:hover{border-color:var(--red);color:var(--red);}
+  .page{max-width:1400px;margin:0 auto;padding:24px;}
+
+  /* STATS */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+  .stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .stat-label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);}
+  .stat-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+  .stat-icon.gray{background:#f3f4f6;}.stat-icon.green{background:#dcfce7;}.stat-icon.blue{background:#dbeafe;}.stat-icon.purple{background:#ede9fe;}
+  .stat-value{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:var(--text);line-height:1;}
+  .stat-bar{height:3px;background:var(--bg);border-radius:2px;margin-top:12px;overflow:hidden;}
+  .stat-bar-fill{height:100%;border-radius:2px;background:var(--accent);width:0%;transition:width 0.6s ease;}
+  .stat-bar-fill.green{background:var(--green);}.stat-bar-fill.blue{background:var(--blue);}.stat-bar-fill.purple{background:var(--purple);}
+
+  /* TOOLBAR */
+  .toolbar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .toolbar select,.toolbar input{padding:7px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color 0.15s;height:34px;}
+  .toolbar select:focus,.toolbar input:focus{border-color:var(--accent2);background:#fff;}
+  .toolbar input{width:200px;}
+  .btn-refresh{padding:7px 16px;height:34px;background:var(--text);color:#fff;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.15s;}
+  .btn-refresh:hover{background:#2a2a2a;}
+  .btn-clear{padding:7px 16px;height:34px;background:transparent;color:var(--red);border:1px solid #fecaca;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;margin-left:auto;}
+  .btn-clear:hover{background:#fef2f2;border-color:var(--red);}
+  .record-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--bg);padding:4px 10px;border-radius:5px;border:1px solid var(--border);}
+
+  /* TABLE */
+  .table-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);}
+  .table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .table-header h3{font-size:13px;font-weight:600;color:var(--text);}
+  .table-header span{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:#fafafa;border-bottom:1px solid var(--border);}
+  th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+  td{padding:11px 16px;border-bottom:1px solid #f3f4f6;font-size:12px;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#fafafa;}
+
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;}
+  .badge::before{content:'';width:5px;height:5px;border-radius:50%;display:inline-block;}
+  .badge-login{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;}.badge-login::before{background:#16a34a;}
+  .badge-logout{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}.badge-logout::before{background:#dc2626;}
+  .badge-tool_use{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;}.badge-tool_use::before{background:#2563eb;}
+  .badge-download{background:#fffbeb;color:#b45309;border:1px solid #fde68a;}.badge-download::before{background:#d97706;}
+
+  .mono{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+  .tool-tag{display:inline-block;padding:2px 8px;background:#f3f4f6;border-radius:4px;font-size:11px;color:var(--accent);font-weight:500;}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+  .empty-state .e-icon{font-size:32px;margin-bottom:10px;opacity:0.4;}
+  .empty-state p{font-size:13px;}
+  .loading-row td{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+
+  .pagination{display:flex;align-items:center;justify-content:center;gap:4px;padding:14px;border-top:1px solid var(--border);}
+  .pg-btn{padding:6px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all 0.15s;min-width:34px;text-align:center;}
+  .pg-btn:hover{background:var(--text);color:#fff;border-color:var(--text);}
+  .pg-btn.active{background:var(--text);color:#fff;border-color:var(--text);}
+  .pg-btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .pg-btn:disabled:hover{background:var(--bg);color:var(--text);border-color:var(--border);}
+
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.5s linear infinite;vertical-align:middle;margin-left:6px;}
+
+  /* Tool manager */
+  .tool-manager{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .tool-manager h3{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .tool-manager h3 span{font-size:11px;font-weight:400;color:var(--muted);}
+  .tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+  .tool-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:12px;}
+  .tool-item-left{display:flex;align-items:center;gap:8px;}
+  .tool-dot{width:7px;height:7px;border-radius:50%;background:#d1d5db;}
+  .tool-dot.active{background:var(--green);}
+  .tool-name{font-weight:500;color:var(--text);}
+  .tool-toggle{position:relative;width:32px;height:18px;cursor:pointer;}
+  .tool-toggle input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;top:0;left:0;right:0;bottom:0;background:#d1d5db;border-radius:18px;transition:0.2s;}
+  .toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:0.2s;}
+  .tool-toggle input:checked + .toggle-slider{background:var(--green);}
+  .tool-toggle input:checked + .toggle-slider::before{transform:translateX(14px);}
+  .tool-stats-row{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;}
+  .tool-stat-chip{padding:4px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+  .tool-stat-chip strong{color:var(--text);}
+
+  @media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr);}}</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="icon">📄</div>
+      <h1>PDFWorks Admin</h1>
+      <p>Sign in to access the dashboard</p>
+    </div>
+    <div class="login-box">
+      <label>Email address</label>
+      <input type="email" id="loginEmail" placeholder="admin@pdfworks.com" />
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()" />
+      <button onclick="doLogin()">Sign in</button>
+      <div id="loginError">Incorrect email or password.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <header>
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="header-logo">📄</div>
+        <span class="header-title">PDFWorks</span>
+        <div class="header-divider"></div>
+        <span class="header-sub">Admin Dashboard</span>
+      </div>
+      <div class="header-right">
+        <span id="adminEmail"></span>
+        <button class="btn-logout" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page">
+
+    <!-- Stats — 4 cards -->
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-top"><span class="stat-label">Total Events</span><div class="stat-icon gray">📊</div></div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-bar"><div class="stat-bar-fill" id="barTotal"></div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-label">Logins</span><div class="stat-icon green">🔑</div></div>
+        <div class="stat-value" id="statLogins">—</div>
+        <div class="stat-bar"><div class="stat-bar-fill green" id="barLogins"></div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-label">Tool Uses</span><div class="stat-icon blue">🛠</div></div>
+        <div class="stat-value" id="statTools">—</div>
+        <div class="stat-bar"><div class="stat-bar-fill blue" id="barTools"></div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-top"><span class="stat-label">Unique Users</span><div class="stat-icon purple">👤</div></div>
+        <div class="stat-value" id="statUsers">—</div>
+        <div class="stat-bar"><div class="stat-bar-fill purple" id="barUsers"></div></div>
+      </div>
+    </div>
+
+    <!-- Tool Manager -->
+    <div class="tool-manager">
+      <h3>🛠 Tool Activity Monitor <span>— toggle to show/hide tools in the filter</span></h3>
+      <div class="tools-grid" id="toolsGrid">
+        <!-- populated by JS -->
+      </div>
+      <div class="tool-stats-row" id="toolStatsRow">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <select id="filterType" onchange="loadActivity()">
+        <option value="">All types</option>
+        <option value="login">Login</option>
+        <option value="logout">Logout</option>
+        <option value="tool_use">Tool use</option>
+      </select>
+      <input type="text" id="filterEmail" placeholder="Filter by email…" oninput="debounceLoad()" />
+      <select id="filterTool" onchange="loadActivity()">
+        <option value="">All tools</option>
+        <!-- populated dynamically -->
+      </select>
+      <button class="btn-refresh" onclick="loadAll()">↻ Refresh</button>
+      <span class="record-count" id="totalCount">— records</span>
+      <button class="btn-clear" onclick="clearLogs()">✕ Clear logs</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <h3>Activity Log</h3>
+        <span id="tableSubtitle">Loading…</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Type</th><th>Email / User</th>
+              <th>Tool</th><th>File</th><th>IP Address</th><th>Date &amp; Time</th>
+            </tr>
+          </thead>
+          <tbody id="activityBody">
+            <tr class="loading-row"><td colspan="7">Loading <span class="spinner"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:3009';
+let token = localStorage.getItem('adminToken');
+let currentPage = 0;
+const PAGE_SIZE = 50;
+let debounceTimer;
+
+// All 35 tools — toggle on/off in the filter
+const ALL_TOOLS = [
+  { id:'merge',            label:'Merge PDF' },
+  { id:'split',            label:'Split PDF' },
+  { id:'organize',         label:'Organize Pages' },
+  { id:'rotate',           label:'Rotate PDF' },
+  { id:'delete',           label:'Delete Pages' },
+  { id:'extract',          label:'Extract Pages' },
+  { id:'compress',         label:'Compress PDF' },
+  { id:'optimize',         label:'Optimize PDF' },
+  { id:'optimize-images',  label:'Optimize Images' },
+  { id:'protect',          label:'Protect PDF' },
+  { id:'protect-pdf',      label:'Protect PDF (API)' },
+  { id:'unlock',           label:'Unlock PDF' },
+  { id:'unprotect-pdf',    label:'Unprotect PDF (API)' },
+  { id:'redact',           label:'Redact PDF' },
+  { id:'encrypt',          label:'Encrypt PDF' },
+  { id:'metadata',         label:'Edit Metadata' },
+  { id:'digital-signature',label:'Digital Signature' },
+  { id:'jpg-to-pdf',       label:'JPG to PDF' },
+  { id:'png-to-pdf',       label:'PNG to PDF' },
+  { id:'pdf-to-jpg',       label:'PDF to JPG' },
+  { id:'pdf-to-png',       label:'PDF to PNG' },
+  { id:'pdf-to-word',      label:'PDF to Word' },
+  { id:'pdf-to-excel',     label:'PDF to Excel' },
+  { id:'pdf-to-ppt',       label:'PDF to PPT' },
+  { id:'pdf-to-txt',       label:'PDF to Text' },
+  { id:'pdf-to-html',      label:'PDF to HTML' },
+  { id:'word-to-pdf',      label:'Word to PDF' },
+  { id:'excel-to-pdf',     label:'Excel to PDF' },
+  { id:'ppt-to-pdf',       label:'PPT to PDF' },
+  { id:'html-to-pdf',      label:'HTML to PDF' },
+  { id:'text-to-pdf',      label:'Text to PDF' },
+  { id:'watermark',        label:'Add Watermark' },
+  { id:'watermark-image',  label:'Image Watermark' },
+  { id:'page-numbers',     label:'Page Numbers' },
+  { id:'add-text',         label:'Add Text' },
+  { id:'add-image',        label:'Add Image' },
+  { id:'add-signature',    label:'Add Signature' },
+  { id:'ocr',              label:'OCR PDF' },
+  { id:'compare',          label:'Compare PDFs' },
+  { id:'flatten',          label:'Flatten PDF' },
+  { id:'repair',           label:'Repair PDF' },
+  { id:'batch-process',    label:'Batch Process' },
+  { id:'form-detection',   label:'Form Detection' },
+  { id:'barcode',          label:'Barcode Reader' },
+];
+
+// Which tools are enabled in the filter (all enabled by default)
+let enabledTools = new Set(ALL_TOOLS.map(t => t.id));
+// Tool usage counts from stats
+let toolCounts = {};
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPass').value;
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+    try {
+        const res  = await fetch(`${API}/api/admin/login`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ email, password: pass })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        token = data.token;
+        localStorage.setItem('adminToken', token);
+        document.getElementById('adminEmail').textContent = email;
+        showDashboard();
+    } catch(e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+    }
+}
+
+function doLogout() {
+    localStorage.removeItem('adminToken');
+    token = null;
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadAll();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+async function loadStats() {
+    try {
+        const res  = await fetch(`${API}/api/admin/stats`, { headers:{ 'Authorization':`Bearer ${token}` } });
+        const data = await res.json();
+        const total  = data.total     || 0;
+        const logins = data.logins    || 0;
+        const tools  = data.tool_uses || 0;
+        const users  = data.users     || 0;
+
+        document.getElementById('statTotal').textContent  = total;
+        document.getElementById('statLogins').textContent = logins;
+        document.getElementById('statTools').textContent  = tools;
+        document.getElementById('statUsers').textContent  = users;
+
+        toolCounts = data.tools || {};
+
+        setTimeout(() => {
+            document.getElementById('barTotal').style.width   = '100%';
+            document.getElementById('barLogins').style.width  = total ? Math.round(logins/total*100)+'%' : '0%';
+            document.getElementById('barTools').style.width   = total ? Math.round(tools/total*100)+'%'  : '0%';
+            document.getElementById('barUsers').style.width   = total ? Math.min(100,users*10)+'%'       : '0%';
+        }, 100);
+
+        renderToolManager();
+    } catch(e) { console.error('Stats error:', e); }
+}
+
+// ── Tool Manager ──────────────────────────────────────────────────────────────
+function renderToolManager() {
+    const grid = document.getElementById('toolsGrid');
+    grid.innerHTML = ALL_TOOLS.map(t => {
+        const count   = toolCounts[t.id] || 0;
+        const checked = enabledTools.has(t.id) ? 'checked' : '';
+        return `
+        <div class="tool-item">
+          <div class="tool-item-left">
+            <div class="tool-dot ${enabledTools.has(t.id) ? 'active' : ''}"></div>
+            <span class="tool-name">${t.label}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${count > 0 ? `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);">${count}x</span>` : ''}
+            <label class="tool-toggle">
+              <input type="checkbox" ${checked} onchange="toggleTool('${t.id}', this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Top tools chips
+    const sorted = Object.entries(toolCounts).sort((a,b) => b[1]-a[1]).slice(0, 8);
+    document.getElementById('toolStatsRow').innerHTML = sorted.length
+        ? sorted.map(([tool, count]) =>
+            `<span class="tool-stat-chip"><strong>${count}</strong> ${tool}</span>`
+          ).join('')
+        : '<span class="tool-stat-chip" style="color:var(--muted)">No tool data yet</span>';
+
+    // Update filter dropdown
+    updateFilterDropdown();
+}
+
+function toggleTool(toolId, enabled) {
+    if (enabled) enabledTools.add(toolId);
+    else enabledTools.delete(toolId);
+    renderToolManager();
+    loadActivity();
+}
+
+function updateFilterDropdown() {
+    const sel = document.getElementById('filterTool');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">All tools</option>';
+    ALL_TOOLS.filter(t => enabledTools.has(t.id)).forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.label;
+        if (t.id === current) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+// ── Activity ──────────────────────────────────────────────────────────────────
+async function loadActivity() { currentPage = 0; await fetchAndRender(); }
+
+async function fetchAndRender() {
+    const type  = document.getElementById('filterType').value;
+    const email = document.getElementById('filterEmail').value.trim();
+    const tool  = document.getElementById('filterTool').value;
+
+    let url = `${API}/api/admin/activity?limit=${PAGE_SIZE}&offset=${currentPage * PAGE_SIZE}`;
+    if (type)  url += `&type=${type}`;
+    if (email) url += `&email=${encodeURIComponent(email)}`;
+    if (tool)  url += `&tool=${tool}`;
+
+    document.getElementById('activityBody').innerHTML =
+        '<tr class="loading-row"><td colspan="7">Loading <span class="spinner"></span></td></tr>';
+    document.getElementById('tableSubtitle').textContent = 'Fetching…';
+
+    try {
+        const res  = await fetch(url, { headers:{ 'Authorization':`Bearer ${token}` } });
+        const data = await res.json();
+        renderTable(data.entries, data.total);
+        renderPagination(data.total);
+        document.getElementById('totalCount').textContent = data.total + ' records';
+        document.getElementById('tableSubtitle').textContent =
+            `Showing ${currentPage*PAGE_SIZE+1}–${Math.min((currentPage+1)*PAGE_SIZE, data.total)} of ${data.total}`;
+    } catch(e) {
+        document.getElementById('activityBody').innerHTML =
+            '<tr class="loading-row"><td colspan="7">Error loading data</td></tr>';
+    }
+}
+
+function loadAll() { loadStats(); fetchAndRender(); }
+function debounceLoad() { clearTimeout(debounceTimer); debounceTimer = setTimeout(loadActivity, 400); }
+
+// ── Render table ──────────────────────────────────────────────────────────────
+function renderTable(entries, total) {
+    const tbody = document.getElementById('activityBody');
+    if (!entries || entries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7">
+            <div class="empty-state"><div class="e-icon">📭</div><p>No activity found</p></div>
+        </td></tr>`;
+        return;
+    }
+    tbody.innerHTML = entries.map((e, i) => `
+        <tr>
+          <td class="mono">${currentPage*PAGE_SIZE+i+1}</td>
+          <td><span class="badge badge-${e.type}">${e.type}</span></td>
+          <td class="mono">${e.email || '<span style="color:#d1d5db">guest</span>'}</td>
+          <td>${e.tool ? `<span class="tool-tag">${e.tool}</span>` : '<span style="color:#d1d5db">—</span>'}</td>
+          <td class="mono" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e.filename||''}">${e.filename||'—'}</td>
+          <td class="mono">${e.ip||'—'}</td>
+          <td class="mono">${formatTime(e.timestamp)}</td>
+        </tr>`).join('');
+}
+
+function renderPagination(total) {
+    const pages = Math.ceil(total / PAGE_SIZE);
+    const pg = document.getElementById('pagination');
+    if (pages <= 1) { pg.innerHTML = ''; return; }
+    let html = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===0?'disabled':''}>← Prev</button>`;
+    for (let i = Math.max(0,currentPage-2); i <= Math.min(pages-1,currentPage+2); i++) {
+        html += `<button class="pg-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i+1}</button>`;
+    }
+    html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage>=pages-1?'disabled':''}>Next →</button>`;
+    pg.innerHTML = html;
+}
+
+async function goPage(p) { currentPage = p; await fetchAndRender(); window.scrollTo(0,0); }
+
+function formatTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-GB') + ' ' +
+           d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+async function clearLogs() {
+    if (!confirm('Clear ALL activity logs? This cannot be undone.')) return;
+    await fetch(`${API}/api/admin/activity`, {
+        method:'DELETE', headers:{ 'Authorization':`Bearer ${token}` }
+    });
+    loadAll();
+}
+
+// Auto-login
+if (token) {
+    fetch(`${API}/api/admin/stats`, { headers:{ 'Authorization':`Bearer ${token}` } })
+        .then(r => {
+            if (r.ok) {
+                try { document.getElementById('adminEmail').textContent = JSON.parse(atob(token.split('.')[1])).email; } catch(e){}
+                showDashboard();
+            }
+        }).catch(()=>{});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+[
+  {
+    "id": 1773470561687,
+    "timestamp": "2026-03-14T06:42:41.687Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773470561248,
+    "timestamp": "2026-03-14T06:42:41.248Z",
+    "type": "tool_use",
+    "email": "ebran@gmail.com",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773470541135,
+    "timestamp": "2026-03-14T06:42:21.135Z",
+    "type": "login",
+    "email": "ebran@gmail.com",
+    "ip": "::1"
+  },
+  {
+    "id": 1773470462461,
+    "timestamp": "2026-03-14T06:41:02.461Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "merge",
+    "filename": "",
+    "filesize": 0
+  }
+]
