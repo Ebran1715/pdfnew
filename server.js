@@ -1,3 +1,5 @@
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const logger   = require('./activity-logger');
 const express  = require('express');
 const bodyParser = require('body-parser');
@@ -42,9 +44,16 @@ function findUser(email) {
 
 function saveUser(user) {
     const db = readDB();
-    const idx = db.users.findIndex(u => u.id === user.id);
-    if (idx >= 0) db.users[idx] = user;
-    else db.users.push(user);
+    const existingIndex = db.users.findIndex(u => u.email === user.email);
+    
+    if (existingIndex >= 0) {
+        // Update existing user
+        db.users[existingIndex] = { ...db.users[existingIndex], ...user };
+    } else {
+        // Add new user
+        db.users.push(user);
+    }
+    
     writeDB(db);
 }
 
@@ -256,6 +265,81 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
             created_at: user.created_at, last_login: user.last_login
         }
     });
+});
+                    // Google Login
+app.post('/api/auth/google', async (req, res) => {
+    try {
+        const { token } = req.body;
+        
+        if (!token) {
+            return res.status(400).json({ error: 'Token is required' });
+        }
+
+        // Verify Google token
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+        const { name, email, picture, sub: googleId } = payload;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Could not get email from Google' });
+        }
+
+        // Check if user exists
+        let user = findUser(email);
+
+        if (!user) {
+            // Create new user
+            user = {
+                id: Date.now().toString(),
+                name: name,
+                email: email,
+                picture: picture,
+                googleId: googleId,
+                provider: 'google',
+                createdAt: new Date().toISOString()
+            };
+            saveUser(user);
+            console.log('New Google user created:', email);
+        } else {
+            // Update existing user with Google info
+            user.picture = picture;
+            user.googleId = googleId;
+            user.provider = 'google';
+            saveUser(user);
+        }
+
+        // Create session
+        const sessionToken = Math.random().toString(36).substring(2) + 
+                            Date.now().toString(36) + 
+                            Math.random().toString(36).substring(2);
+        
+        saveSession(sessionToken, email);
+
+        // Log activity
+        logUserActivity(email, 'google_login', {
+            name: user.name,
+            provider: 'google'
+        });
+
+        res.json({
+            token: sessionToken,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                picture: user.picture,
+                provider: 'google'
+            }
+        });
+
+    } catch (error) {
+        console.error('Google auth error:', error);
+        res.status(401).json({ error: 'Google authentication failed' });
+    }
 });
 
 // ==================== USER STATS ====================

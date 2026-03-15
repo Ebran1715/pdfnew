@@ -2692,7 +2692,37 @@
     background: rgba(0,0,0,0.3);
 }
 .semrush-backdrop.open { display: block; }
+
+/* Google Auth Styles */
+.google-btn-container {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0 15px;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+    color: var(--gray-400);
+    font-size: 13px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gray-200);
+}
+
+.auth-divider span {
+    padding: 0 12px;
+    white-space: nowrap;
+}
     </style>
+    <!-- Google Sign In -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <!-- Header - Black -->
@@ -2794,6 +2824,30 @@
                 <div class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</div>
             </div>
             <div id="loginForm" class="auth-form active">
+                <!-- Google Sign In Button -->
+                <div id="g_id_onload"
+                     data-client_id="986583218091-jn1l3k7aji2u1pi1683ig4l1r27q1rge.apps.googleusercontent.com
+                     "
+                     data-callback="handleGoogleLogin"
+                     data-auto_prompt="false">
+                </div>
+                <div class="google-btn-container">
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-size="large"
+                         data-theme="outline"
+                         data-text="sign_in_with"
+                         data-shape="rectangular"
+                         data-logo_alignment="left"
+                         data-width="370">
+                    </div>
+                </div>
+            
+                <!-- OR Divider -->
+                <div class="auth-divider">
+                    <span>or login with email</span>
+                </div>
+            
                 <div class="form-group">
                     <label>Email</label>
                     <input type="email" id="loginEmail" placeholder="Enter your email">
@@ -2808,6 +2862,24 @@
                 </div>
             </div>
             <div id="signupForm" class="auth-form">
+                <!-- Google Sign Up Button -->
+                <div class="google-btn-container">
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-size="large"
+                         data-theme="outline"
+                         data-text="signup_with"
+                         data-shape="rectangular"
+                         data-logo_alignment="left"
+                         data-width="370">
+                    </div>
+                </div>
+            
+                <!-- OR Divider -->
+                <div class="auth-divider">
+                    <span>or sign up with email</span>
+                </div>
+            
                 <div class="form-group">
                     <label>Full Name</label>
                     <input type="text" id="signupName" placeholder="Enter your name">
@@ -15095,6 +15167,64 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape') closeSemrush();
     });
 });
+
+// ==================== GOOGLE LOGIN ====================
+async function handleGoogleLogin(response) {
+    try {
+        showToast('Signing in with Google...', 'info');
+        
+        const res = await fetch(`${API}/api/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: response.credential })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.error || 'Google login failed');
+        }
+
+        // Save to localStorage
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Update app state
+        window.isLoggedIn = true;
+        window.currentUser = data.user;
+
+        // Update UI
+        const authButtons = document.getElementById('authButtons');
+        const userMenu = document.getElementById('userMenu');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const userEmail = document.getElementById('userEmail');
+
+        if (authButtons) authButtons.style.display = 'none';
+        if (userMenu) userMenu.style.display = 'block';
+
+        // Show profile picture or initials
+        if (userAvatar) {
+            if (data.user.picture) {
+                userAvatar.innerHTML = `<img src="${data.user.picture}" 
+                    style="width:100%;height:100%;border-radius:50%;object-fit:cover;" 
+                    onerror="this.parentElement.textContent='${data.user.name.substring(0,2).toUpperCase()}'">`;
+            } else {
+                userAvatar.textContent = data.user.name.substring(0, 2).toUpperCase();
+            }
+        }
+
+        if (userName) userName.textContent = data.user.name;
+        if (userEmail) userEmail.textContent = data.user.email;
+
+        closeAuthModal();
+        showToast(`Welcome, ${data.user.name}! You are now logged in.`, 'success');
+
+    } catch (error) {
+        console.error('Google login error:', error);
+        showToast('Google login failed: ' + error.message, 'error');
+    }
+}
 
 </script>
 </body>
