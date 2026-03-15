@@ -247,7 +247,11 @@
 </div>
 
 <script>
-const API = 'http://localhost:3009';
+  const API = window.location.hostname === 'localhost'
+    ? 'http://localhost:3009'
+    : 'https://working-pdf.onrender.com';
+    
+
 let token = localStorage.getItem('adminToken');
 let currentPage = 0;
 const PAGE_SIZE = 50;
