@@ -7,7 +7,7 @@
       "password": "$2a$10$b9zTIh2GJ4/D13pJqAAXtu4yADCoSOlkNHQRxjhSzdoLV2glAa226",
       "is_premium": false,
       "created_at": "2026-03-14T06:56:09.674Z",
-      "last_login": null
+      "last_login": "2026-03-15T08:05:58.729Z"
     },
     {
       "id": "083f9e4f-c470-4054-b458-836fd5a11150",
@@ -35,9 +35,24 @@
       "is_premium": false,
       "created_at": "2026-03-14T10:46:36.568Z",
       "last_login": null
+    },
+    {
+      "id": "1773561887847",
+      "name": "Ebran Husain",
+      "email": "ebranhusain777@gmail.com",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocJ3wjdK-n-F0VAhYMz9v85KSmlQVLXWxokvjOv_U2tlxcg4jzSc=s96-c",
+      "googleId": "114073384059901944512",
+      "provider": "google",
+      "createdAt": "2026-03-15T08:04:47.847Z"
     }
   ],
-  "sessions": [],
+  "sessions": [
+    "srlf60g9abgmmrgyezu1k9c946sjqb",
+    "6f4smxhchxammrh0c6liy2hiw2gd3r",
+    "9q7h0n5gmammrjylcrfekohj00fq9",
+    "wlcla3r3rwkmmrka9yg7i3yryyyo3",
+    "pck59ect92mmrkcob0v9ysrctnxc"
+  ],
   "activity": [
     {
       "id": "dadbcb36-23fd-4dcd-b689-41ada7202120",
@@ -73,6 +88,70 @@
       "action": "logout",
       "ip": "::1",
       "timestamp": "2026-03-14T09:19:55.260Z"
+    },
+    {
+      "id": "6c57df4a-8c0a-478a-a3e5-40f3c768fd86",
+      "user_id": "ebranhusain777@gmail.com",
+      "action": "google_login",
+      "ip": {
+        "name": "Ebran Husain",
+        "provider": "google"
+      },
+      "timestamp": "2026-03-15T08:04:47.852Z"
+    },
+    {
+      "id": "b3ee7227-b309-4ebc-9111-603d7dff9da1",
+      "user_id": "c85c613f-5027-4ee8-81dc-6d2527014105",
+      "action": "login",
+      "ip": "::1",
+      "timestamp": "2026-03-15T08:05:58.730Z"
+    },
+    {
+      "id": "c9fec18d-bd36-4de7-bb7e-4306ad0b17f1",
+      "user_id": "c85c613f-5027-4ee8-81dc-6d2527014105",
+      "action": "logout",
+      "ip": "::1",
+      "timestamp": "2026-03-15T08:06:08.788Z"
+    },
+    {
+      "id": "09a793df-f0cf-4710-94fb-51040baa5452",
+      "user_id": "ebranhusain777@gmail.com",
+      "action": "google_login",
+      "ip": {
+        "name": "Ebran Husain",
+        "provider": "google"
+      },
+      "timestamp": "2026-03-15T08:06:17.519Z"
+    },
+    {
+      "id": "57bade56-97b7-4dea-ad4d-c9c0bfc4378c",
+      "user_id": "ebranhusain777@gmail.com",
+      "action": "google_login",
+      "ip": {
+        "name": "Ebran Husain",
+        "provider": "google"
+      },
+      "timestamp": "2026-03-15T09:28:54.941Z"
+    },
+    {
+      "id": "2bd55176-d8b6-44a2-9fbc-2418432b0ba1",
+      "user_id": "ebranhusain777@gmail.com",
+      "action": "google_login",
+      "ip": {
+        "name": "Ebran Husain",
+        "provider": "google"
+      },
+      "timestamp": "2026-03-15T09:38:00.042Z"
+    },
+    {
+      "id": "631d9628-0ccd-4929-be74-631d0a45ba2a",
+      "user_id": "ebranhusain777@gmail.com",
+      "action": "google_login",
+      "ip": {
+        "name": "Ebran Husain",
+        "provider": "google"
+      },
+      "timestamp": "2026-03-15T09:39:51.951Z"
     }
   ]
 }

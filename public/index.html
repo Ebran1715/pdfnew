@@ -2720,6 +2720,37 @@
     padding: 0 12px;
     white-space: nowrap;
 }
+
+/* Google Auth Responsive */
+@media (max-width: 768px) {
+    .google-btn-container {
+        margin: 8px 0 12px;
+    }
+
+    .google-btn-container iframe {
+        width: 100% !important;
+    }
+
+    .auth-divider {
+        margin: 12px 0;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .google-btn-container {
+        margin: 6px 0 10px;
+    }
+
+    .auth-divider {
+        margin: 10px 0;
+        font-size: 11px;
+    }
+
+    .auth-divider span {
+        padding: 0 8px;
+    }
+}
     </style>
     <!-- Google Sign In -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -2838,7 +2869,7 @@
                          data-text="sign_in_with"
                          data-shape="rectangular"
                          data-logo_alignment="left"
-                         data-width="370">
+                         data-width="100%">
                     </div>
                 </div>
             
@@ -14812,41 +14843,57 @@ document.addEventListener('change', function(e) {
         };
 
         // Override handleLogout
-        window.handleLogout = async function() {
-            try {
-                const token = localStorage.getItem('authToken');
-                if (token) {
-                    await fetch(`${API_BASE_URL}/auth/logout`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                }
-            } catch (error) {
-                console.error('Logout error:', error);
-            } finally {
-                // Clear localStorage
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('user');
-                
-                // Update app state
-                window.isLoggedIn = false;
-                window.currentUser = null;
-                
-                // Hide user menu, show auth buttons
-                const authButtons = document.getElementById('authButtons');
-                const userMenu = document.getElementById('userMenu');
-                const userDropdown = document.getElementById('userDropdown');
-                
-                if (authButtons) authButtons.style.display = 'flex';
-                if (userMenu) userMenu.style.display = 'none';
-                if (userDropdown) userDropdown.classList.remove('show');
-                
-                // Update premium UI for guests
-                updatePremiumUI(false);
-                
-                showToast('Logged out successfully', 'info');
-            }
-        };
+window.handleLogout = async function() {
+    try {
+        // Log logout BEFORE clearing localStorage
+        const logoutUser = window.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
+        if (logoutUser && logoutUser.email) {
+            fetch(`${API}/api/log-tool`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tool: 'logout',
+                    filename: '',
+                    filesize: 0,
+                    email: logoutUser.email,
+                    type: 'logout'
+                })
+            }).catch(() => {});
+        }
+
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            await fetch(`${API_BASE_URL}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+    } finally {
+        // Clear localStorage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+
+        // Update app state
+        window.isLoggedIn = false;
+        window.currentUser = null;
+
+        // Hide user menu, show auth buttons
+        const authButtons = document.getElementById('authButtons');
+        const userMenu = document.getElementById('userMenu');
+        const userDropdown = document.getElementById('userDropdown');
+
+        if (authButtons) authButtons.style.display = 'flex';
+        if (userMenu) userMenu.style.display = 'none';
+        if (userDropdown) userDropdown.classList.remove('show');
+
+        // Update premium UI for guests
+        updatePremiumUI(false);
+
+        showToast('Logged out successfully', 'info');
+    }
+};
 
         // ==================== TEST PREMIUM ACCESS ====================
         
@@ -15216,8 +15263,23 @@ async function handleGoogleLogin(response) {
         if (userName) userName.textContent = data.user.name;
         if (userEmail) userEmail.textContent = data.user.email;
 
-        closeAuthModal();
-        showToast(`Welcome, ${data.user.name}! You are now logged in.`, 'success');
+        // closeAuthModal();
+        // showToast(`Welcome, ${data.user.name}! You are now logged in.`, 'success');
+        // Log google login to admin dashboard
+fetch(`${API}/api/log-tool`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        tool: 'google_login',
+        filename: '',
+        filesize: 0,
+        email: data.user.email,
+        type: 'login'
+    })
+}).catch(() => {});
+
+closeAuthModal();
+showToast(`Welcome, ${data.user.name}! You are now logged in.`, 'success');
 
     } catch (error) {
         console.error('Google login error:', error);
