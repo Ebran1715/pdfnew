@@ -1,5 +1,5 @@
 const { OAuth2Client } = require('google-auth-library');
-const googleClient = new OAuth2Client(896089467724-crir8t378v8kd0qm39pj5d6rlsb77qcl.apps.googleusercontent.com);
+const googleClient = new OAuth2Client('896089467724-crir8t378v8kd0qm39pj5d6rlsb77qcl.apps.googleusercontent.com');
 const logger   = require('./activity-logger');
 const express  = require('express');
 const bodyParser = require('body-parser');
@@ -284,7 +284,7 @@ app.post('/api/auth/google', async (req, res) => {
         // Verify Google token
         const ticket = await googleClient.verifyIdToken({
             idToken: token,
-            audience: 896089467724-crir8t378v8kd0qm39pj5d6rlsb77qcl.apps.googleusercontent.com
+            audience:'896089467724-crir8t378v8kd0qm39pj5d6rlsb77qcl.apps.googleusercontent.com'
 
         });
 
