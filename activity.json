@@ -1,1 +1,223 @@
-[]
+[
+  {
+    "id": 1773572100876,
+    "timestamp": "2026-03-15T10:55:00.876Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unprotect-pdf",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773572100715,
+    "timestamp": "2026-03-15T10:55:00.715Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773572045027,
+    "timestamp": "2026-03-15T10:54:05.027Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773572044673,
+    "timestamp": "2026-03-15T10:54:04.673Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773571946754,
+    "timestamp": "2026-03-15T10:52:26.754Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773571882075,
+    "timestamp": "2026-03-15T10:51:22.075Z",
+    "type": "logout",
+    "email": "xyz@gmail.com",
+    "ip": "::1"
+  },
+  {
+    "id": 1773571882069,
+    "timestamp": "2026-03-15T10:51:22.069Z",
+    "type": "tool_use",
+    "email": "xyz@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773571875179,
+    "timestamp": "2026-03-15T10:51:15.179Z",
+    "type": "login",
+    "email": "xyz@gmail.com",
+    "ip": "::1"
+  },
+  {
+    "id": 1773571841772,
+    "timestamp": "2026-03-15T10:50:41.772Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773571834968,
+    "timestamp": "2026-03-15T10:50:34.968Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773571473795,
+    "timestamp": "2026-03-15T10:44:33.795Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773571093277,
+    "timestamp": "2026-03-15T10:38:13.277Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773571093220,
+    "timestamp": "2026-03-15T10:38:13.220Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773571070147,
+    "timestamp": "2026-03-15T10:37:50.147Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773571069675,
+    "timestamp": "2026-03-15T10:37:49.675Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773571045909,
+    "timestamp": "2026-03-15T10:37:25.909Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "split",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773571022299,
+    "timestamp": "2026-03-15T10:37:02.299Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "merge",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773570981048,
+    "timestamp": "2026-03-15T10:36:21.048Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773570567387,
+    "timestamp": "2026-03-15T10:29:27.387Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773570566972,
+    "timestamp": "2026-03-15T10:29:26.972Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773570480974,
+    "timestamp": "2026-03-15T10:28:00.974Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773570480446,
+    "timestamp": "2026-03-15T10:28:00.446Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773570361395,
+    "timestamp": "2026-03-15T10:26:01.395Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "watermark",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773570351314,
+    "timestamp": "2026-03-15T10:25:51.314Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773569466309,
+    "timestamp": "2026-03-15T10:11:06.309Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  }
+]

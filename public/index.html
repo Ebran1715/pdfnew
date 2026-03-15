@@ -2751,6 +2751,642 @@
         padding: 0 8px;
     }
 }
+
+
+/* ── PROFILE MODAL ── */
+.profile-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+    overflow-y: auto;
+}
+
+.profile-content {
+    background: white;
+    max-width: 600px;
+    margin: 60px auto;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+    overflow: hidden;
+    position: relative;
+}
+
+.profile-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 40px 30px 30px;
+    text-align: center;
+    color: white;
+    position: relative;
+}
+
+.profile-avatar-large {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 auto 15px;
+    border: 3px solid rgba(255,255,255,0.5);
+    overflow: hidden;
+}
+
+.profile-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.profile-email {
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
+
+.profile-provider-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-top: 8px;
+}
+
+.profile-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+.profile-tab {
+    flex: 1;
+    padding: 14px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-500);
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+}
+
+.profile-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: white;
+}
+
+.profile-tab:hover { color: var(--primary); }
+
+.profile-tab-content {
+    display: none;
+    padding: 24px;
+}
+
+.profile-tab-content.active { display: block; }
+
+.profile-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.profile-close:hover { background: rgba(255,255,255,0.35); }
+
+/* Profile Info */
+.profile-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.profile-info-row:last-child { border-bottom: none; }
+
+.profile-info-label {
+    font-size: 13px;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+.profile-info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.profile-edit-btn {
+    background: var(--gray-100);
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.profile-edit-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* History */
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    transition: all 0.2s;
+}
+
+.history-item:hover {
+    background: #eef2ff;
+    border-color: var(--primary);
+}
+
+.history-icon {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.history-info { flex: 1; }
+
+.history-tool {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.history-time {
+    font-size: 11px;
+    color: var(--gray-400);
+    margin-top: 2px;
+}
+
+.history-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gray-400);
+}
+
+.history-empty i {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Premium */
+.premium-card {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 16px;
+    padding: 24px;
+    color: white;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.premium-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+}
+
+.premium-card p {
+    opacity: 0.9;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+.premium-features-list {
+    list-style: none;
+    margin: 0 0 20px;
+}
+
+.premium-features-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 13px;
+    color: var(--gray-700);
+}
+
+.premium-features-list li:last-child { border-bottom: none; }
+
+.premium-features-list li i {
+    color: var(--success);
+    width: 16px;
+}
+
+/* Settings */
+.settings-section {
+    margin-bottom: 24px;
+}
+
+.settings-section h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.settings-row:last-child { border-bottom: none; }
+
+.settings-label { font-size: 14px; font-weight: 500; color: var(--gray-700); }
+.settings-desc { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+
+.settings-toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.settings-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.settings-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: var(--gray-300);
+    border-radius: 24px;
+    transition: 0.3s;
+}
+
+.settings-toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.settings-toggle input:checked + .settings-toggle-slider {
+    background: var(--primary);
+}
+
+.settings-toggle input:checked + .settings-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.settings-danger-btn {
+    width: 100%;
+    padding: 12px;
+    background: #fee2e2;
+    color: var(--danger);
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.settings-danger-btn:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.settings-save-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.settings-save-btn:hover { background: var(--primary-dark); }
+
+/* ── DARK MODE ── */
+body.dark-mode {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .header {
+    background: #020617 !important;
+    border-color: #1e293b !important;
+}
+
+body.dark-mode .category-section {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .tool-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .tool-card:hover {
+    background: #263349 !important;
+    border-color: var(--primary) !important;
+}
+
+body.dark-mode .tool-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .tool-description {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .section-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .section-subtitle {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .modal-content {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .modal-header {
+    border-color: #334155 !important;
+}
+
+body.dark-mode .modal-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .upload-area {
+    background: #263349 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .upload-area:hover {
+    background: #1e3a5f !important;
+    border-color: var(--primary) !important;
+}
+
+body.dark-mode .upload-text {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .upload-subtext {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .file-item {
+    background: #263349 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .file-name {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .options {
+    background: #263349 !important;
+}
+
+body.dark-mode .option-group label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .option-group input,
+body.dark-mode .option-group select,
+body.dark-mode .option-group textarea {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .result-area {
+    background: #263349 !important;
+}
+
+body.dark-mode .result-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .quick-action-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .quick-action-card h3 {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .quick-action-card p {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .features-section {
+    background: #0f172a !important;
+}
+
+body.dark-mode .feature-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .feature-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .feature-description {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .testimonial-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .testimonial-text {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .author-info h4 {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .profile-content {
+    background: #1e293b !important;
+}
+
+body.dark-mode .profile-tabs {
+    background: #263349 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .profile-tab {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .profile-tab.active {
+    background: #1e293b !important;
+    color: var(--primary) !important;
+}
+
+body.dark-mode .profile-tab-content {
+    background: #1e293b !important;
+}
+
+body.dark-mode .profile-info-row {
+    border-color: #334155 !important;
+}
+
+body.dark-mode .profile-info-label {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .profile-info-value {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .history-item {
+    background: #263349 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .history-tool {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .settings-section h4 {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .settings-row {
+    border-color: #334155 !important;
+}
+
+body.dark-mode .settings-label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .settings-desc {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .auth-content {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .auth-header h2 {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .auth-tabs {
+    background: #263349 !important;
+}
+
+body.dark-mode .auth-tab.active {
+    background: #1e293b !important;
+}
+
+body.dark-mode .form-group label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .form-group input {
+    background: #263349 !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .semrush-panel {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .semrush-cats {
+    background: #263349 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .semrush-cat-item:hover,
+body.dark-mode .semrush-cat-item.active {
+    background: #1e293b !important;
+}
+
+body.dark-mode .semrush-cat-name {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .semrush-tool-card:hover {
+    background: #263349 !important;
+}
+
+body.dark-mode .semrush-tool-name {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .category-title {
+    color: #e2e8f0 !important;
+}
     </style>
     <!-- Google Sign In -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -2807,17 +3443,17 @@
                         <h4 id="userName">John Doe</h4>
                         <p id="userEmail">john@example.com</p>
                     </div>
-                    <div class="dropdown-item">
+                    <div class="dropdown-item" onclick="openProfileModal('info')">
                         <i class="fas fa-user"></i><span>My Profile</span>
                     </div>
-                    <div class="dropdown-item">
+                    <div class="dropdown-item" onclick="openProfileModal('history')">
                         <i class="fas fa-history"></i><span>History</span>
                     </div>
-                    <div class="dropdown-item">
+                    <div class="dropdown-item" onclick="openProfileModal('premium')">
                         <i class="fas fa-crown" style="color:#f59e0b;"></i>
-                        <span>Upgrade to Premium</span>
+                        <span>Premium Features</span>
                     </div>
-                    <div class="dropdown-item">
+                    <div class="dropdown-item" onclick="openProfileModal('settings')">
                         <i class="fas fa-cog"></i><span>Settings</span>
                     </div>
                     <div class="dropdown-item logout" onclick="handleLogout()">
@@ -3635,6 +4271,7 @@ function showToast(message, type = 'success', duration = 3000) {
                                 <p>${content.content}</p>
                                 <a href="#" class="btn" onclick="window.close()">Close Tab</a>
                             </div>
+                            
                         </body>
                         </html>
                     `);
@@ -3805,6 +4442,11 @@ function showToast(message, type = 'success', duration = 3000) {
             createAllModals();
             showToast('Welcome to PDFWorks Pro! Basic tools free, premium features available.', 'info', 5000);
             updateAuthUI();
+            // Apply saved dark mode on page load
+const savedSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+if (savedSettings.darkMode) {
+    document.body.classList.add('dark-mode');
+}
         });
 
         function createAllModals() {
@@ -14093,6 +14735,9 @@ document.addEventListener('change', function(e) {
         // Main process function
         async function processTool(tool) {
              // Log tool use to admin history
+             // Save to history
+    const fileObj = fileStorage[tool];
+    saveToolToHistory(tool, fileObj?.name || '');
     logToolActivity(tool);
             const processors = {
                 'merge': mergePDFs,
@@ -15286,7 +15931,477 @@ showToast(`Welcome, ${data.user.name}! You are now logged in.`, 'success');
         showToast('Google login failed: ' + error.message, 'error');
     }
 }
+// ==================== PROFILE MODAL ====================
 
+function openProfileModal(tab = 'info') {
+    const user = window.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
+    if (!user || !user.email) {
+        showToast('Please login to view your profile', 'warning');
+        openAuthModal('login');
+        return;
+    }
+
+    // Update header
+    const avatarEl = document.getElementById('profileAvatarLarge');
+    const nameEl = document.getElementById('profileName');
+    const emailEl = document.getElementById('profileEmailDisplay');
+    const badgeEl = document.getElementById('profileProviderBadge');
+
+    if (avatarEl) {
+        if (user.picture) {
+            avatarEl.innerHTML = `<img src="${user.picture}" onerror="this.parentElement.textContent='${user.name?.substring(0,2).toUpperCase() || 'U'}'">`;
+        } else {
+            avatarEl.textContent = user.name?.substring(0,2).toUpperCase() || 'U';
+        }
+    }
+
+    if (nameEl) nameEl.textContent = user.name || 'User';
+    if (emailEl) emailEl.textContent = user.email || '';
+
+    if (badgeEl) {
+        if (user.provider === 'google') {
+            badgeEl.innerHTML = '<i class="fab fa-google"></i><span>Google Account</span>';
+        } else {
+            badgeEl.innerHTML = '<i class="fas fa-envelope"></i><span>Email Account</span>';
+        }
+    }
+
+    // Update info tab
+    document.getElementById('infoName').textContent = user.name || '-';
+    document.getElementById('infoEmail').textContent = user.email || '-';
+    document.getElementById('infoProvider').textContent = user.provider === 'google' ? 'Google' : 'Email & Password';
+    document.getElementById('infoJoined').textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Today';
+    document.getElementById('infoToolsUsed').textContent = getToolsUsedCount();
+
+    // Hide change password for Google users
+    const changePasswordRow = document.getElementById('changePasswordRow');
+    if (changePasswordRow) {
+        changePasswordRow.style.display = user.provider === 'google' ? 'none' : 'flex';
+    }
+
+    // Load settings from localStorage
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    document.getElementById('settingNotifications').checked = settings.notifications !== false;
+    document.getElementById('settingHistory').checked = settings.history !== false;
+    document.getElementById('settingDarkMode').checked = settings.darkMode || false;
+
+    // Load history
+    loadProfileHistory();
+
+    // Show modal
+    document.getElementById('profileModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    // Switch to requested tab
+    switchProfileTab(tab);
+}
+
+function closeProfileModal() {
+    document.getElementById('profileModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function switchProfileTab(tab) {
+    // Update tabs
+    document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+
+    // Activate selected
+    const tabMap = {
+        'info': 0,
+        'history': 1,
+        'premium': 2,
+        'settings': 3
+    };
+
+    const tabs = document.querySelectorAll('.profile-tab');
+    if (tabs[tabMap[tab]]) tabs[tabMap[tab]].classList.add('active');
+
+    const content = document.getElementById('profileTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    if (content) content.classList.add('active');
+}
+
+function getToolsUsedCount() {
+    const history = JSON.parse(localStorage.getItem('toolHistory') || '[]');
+    return history.length;
+}
+
+function loadProfileHistory() {
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+
+    const history = JSON.parse(localStorage.getItem('toolHistory') || '[]');
+
+    if (history.length === 0) {
+        historyList.innerHTML = `
+            <div class="history-empty">
+                <i class="fas fa-history"></i>
+                <p>No tool history yet</p>
+                <small>Start using PDF tools to see your history here</small>
+            </div>
+        `;
+        return;
+    }
+
+    // Show last 20 items newest first
+    const recent = history.slice(-20).reverse();
+
+    const toolEmojis = {
+        'merge': '📑', 'split': '✂️', 'compress': '🗜️',
+        'protect': '🔐', 'unlock': '🔓', 'watermark': '💧',
+        'pdf-to-jpg': '🖼️', 'pdf-to-word': '📝', 'ocr': '🔍',
+        'rotate': '↻', 'delete': '🗑️', 'extract': '📤',
+        'pdf-to-excel': '📊', 'pdf-to-ppt': '📽️', 'compare': '⚖️',
+        'encrypt': '🔒', 'redact': '🔴', 'flatten': '🔨',
+        'repair': '🔧', 'add-text': '📝', 'add-image': '🖼️',
+        'add-signature': '✍️', 'page-numbers': '🔢',
+        'batch-process': '⚡', 'barcode': '📊', 'default': '📄'
+    };
+
+    historyList.innerHTML = recent.map(item => `
+        <div class="history-item" onclick="openTool('${item.tool}')">
+            <div class="history-icon">
+                ${toolEmojis[item.tool] || toolEmojis['default']}
+            </div>
+            <div class="history-info">
+                <div class="history-tool">${item.toolName || item.tool}</div>
+                <div class="history-time">${item.filename ? '📄 ' + item.filename + ' • ' : ''}${formatTimeAgo(item.timestamp)}</div>
+            </div>
+            <i class="fas fa-chevron-right" style="color:var(--gray-300);font-size:12px;"></i>
+        </div>
+    `).join('');
+}
+
+function formatTimeAgo(timestamp) {
+    if (!timestamp) return 'Just now';
+    const now = new Date();
+    const then = new Date(timestamp);
+    const diff = Math.floor((now - then) / 1000);
+
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' hours ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + ' days ago';
+    return then.toLocaleDateString();
+}
+
+function saveToolToHistory(tool, filename) {
+    if (!window.isLoggedIn) return;
+
+    // Check if history saving is enabled
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    if (settings.history === false) return; // Stop if disabled
+
+    const toolNames = {
+        'merge': 'Merge PDF', 'split': 'Split PDF', 'compress': 'Compress PDF',
+        'protect': 'Protect PDF', 'unlock': 'Unlock PDF', 'watermark': 'Add Watermark',
+        'pdf-to-jpg': 'PDF to JPG', 'pdf-to-word': 'PDF to Word', 'ocr': 'OCR PDF',
+        'rotate': 'Rotate PDF', 'delete': 'Delete Pages', 'extract': 'Extract Pages',
+        'pdf-to-excel': 'PDF to Excel', 'pdf-to-ppt': 'PDF to PowerPoint',
+        'compare': 'Compare PDFs', 'encrypt': 'Encrypt PDF', 'redact': 'Redact PDF',
+        'flatten': 'Flatten PDF', 'repair': 'Repair PDF', 'add-text': 'Add Text',
+        'add-image': 'Add Image', 'add-signature': 'Add Signature',
+        'page-numbers': 'Page Numbers', 'batch-process': 'Batch Processing',
+        'barcode': 'Barcode Reader'
+    };
+
+    const history = JSON.parse(localStorage.getItem('toolHistory') || '[]');
+    history.push({
+        tool: tool,
+        toolName: toolNames[tool] || tool,
+        filename: filename || '',
+        timestamp: new Date().toISOString()
+    });
+
+    if (history.length > 100) history.splice(0, history.length - 100);
+    localStorage.setItem('toolHistory', JSON.stringify(history));
+}
+
+function saveSettings() {
+    const settings = {
+        notifications: document.getElementById('settingNotifications')?.checked,
+        history: document.getElementById('settingHistory')?.checked,
+        darkMode: document.getElementById('settingDarkMode')?.checked
+    };
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+
+    // Apply dark mode immediately
+    applyDarkMode(settings.darkMode);
+
+    showToast('Settings saved!', 'success');
+}
+
+function applyDarkMode(enabled) {
+    if (enabled) {
+        document.body.classList.add('dark-mode');
+        document.getElementById('settingDarkMode').checked = true;
+    } else {
+        document.body.classList.remove('dark-mode');
+        document.getElementById('settingDarkMode').checked = false;
+    }
+}
+function clearHistory() {
+    if (confirm('Are you sure you want to clear your tool history?')) {
+        localStorage.removeItem('toolHistory');
+        loadProfileHistory();
+        document.getElementById('infoToolsUsed').textContent = '0';
+        showToast('History cleared!', 'success');
+    }
+}
+
+function showChangePassword() {
+    const form = document.getElementById('changePasswordForm');
+    if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function saveNewPassword() {
+    const newPass = document.getElementById('newPassword')?.value;
+    const confirmPass = document.getElementById('confirmNewPassword')?.value;
+
+    if (!newPass || newPass.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+    }
+
+    if (newPass !== confirmPass) {
+        showToast('Passwords do not match', 'error');
+        return;
+    }
+
+    // Save to backend
+    const token = localStorage.getItem('authToken');
+    fetch(`${API}/api/auth/change-password`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ password: newPass })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Password changed successfully!', 'success');
+            document.getElementById('changePasswordForm').style.display = 'none';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+        } else {
+            showToast(data.error || 'Failed to change password', 'error');
+        }
+    })
+    .catch(() => {
+        showToast('Failed to change password', 'error');
+    });
+}
+
+function editProfileField(field) {
+    if (field === 'name') {
+        const currentName = window.currentUser?.name || '';
+        const newName = prompt('Enter new name:', currentName);
+        if (newName && newName.trim() && newName !== currentName) {
+            // Update locally
+            if (window.currentUser) window.currentUser.name = newName.trim();
+            const stored = JSON.parse(localStorage.getItem('user') || '{}');
+            stored.name = newName.trim();
+            localStorage.setItem('user', JSON.stringify(stored));
+
+            // Update UI
+            document.getElementById('infoName').textContent = newName.trim();
+            document.getElementById('profileName').textContent = newName.trim();
+            document.getElementById('userName').textContent = newName.trim();
+            document.getElementById('userAvatar').textContent = newName.trim().substring(0,2).toUpperCase();
+            document.getElementById('profileAvatarLarge').textContent = newName.trim().substring(0,2).toUpperCase();
+
+            showToast('Name updated!', 'success');
+        }
+    }
+}
+
+// Close on backdrop click
+document.addEventListener('click', function(e) {
+    if (e.target.id === 'profileModal') closeProfileModal();
+});
+
+// Close on Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeProfileModal();
+});
 </script>
+<!-- Profile Modal -->
+<div id="profileModal" class="profile-modal">
+    <div class="profile-content">
+        <button class="profile-close" onclick="closeProfileModal()">&times;</button>
+
+        <!-- Header -->
+        <div class="profile-header">
+            <div class="profile-avatar-large" id="profileAvatarLarge">JD</div>
+            <div class="profile-name" id="profileName">John Doe</div>
+            <div class="profile-email" id="profileEmailDisplay">john@example.com</div>
+            <div class="profile-provider-badge" id="profileProviderBadge">
+                <i class="fas fa-envelope"></i>
+                <span>Email Account</span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="profile-tabs">
+            <div class="profile-tab active" onclick="switchProfileTab('info')">
+                <i class="fas fa-user"></i> Profile
+            </div>
+            <div class="profile-tab" onclick="switchProfileTab('history')">
+                <i class="fas fa-history"></i> History
+            </div>
+            <div class="profile-tab" onclick="switchProfileTab('premium')">
+                <i class="fas fa-crown"></i> Premium
+            </div>
+            <div class="profile-tab" onclick="switchProfileTab('settings')">
+                <i class="fas fa-cog"></i> Settings
+            </div>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="profileTabInfo" class="profile-tab-content active">
+            <div class="profile-info-row">
+                <span class="profile-info-label">Full Name</span>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span class="profile-info-value" id="infoName">John Doe</span>
+                    <button class="profile-edit-btn" onclick="editProfileField('name')">Edit</button>
+                </div>
+            </div>
+            <div class="profile-info-row">
+                <span class="profile-info-label">Email</span>
+                <span class="profile-info-value" id="infoEmail">john@example.com</span>
+            </div>
+            <div class="profile-info-row">
+                <span class="profile-info-label">Login Method</span>
+                <span class="profile-info-value" id="infoProvider">Email</span>
+            </div>
+            <div class="profile-info-row">
+                <span class="profile-info-label">Member Since</span>
+                <span class="profile-info-value" id="infoJoined">-</span>
+            </div>
+            <div class="profile-info-row">
+                <span class="profile-info-label">Tools Used</span>
+                <span class="profile-info-value" id="infoToolsUsed">0</span>
+            </div>
+            <div class="profile-info-row">
+                <span class="profile-info-label">Account Status</span>
+                <span style="background:#dcfce7;color:#16a34a;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">
+                    Active
+                </span>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="profileTabHistory" class="profile-tab-content">
+            <div id="historyList">
+                <div class="history-empty">
+                    <i class="fas fa-history"></i>
+                    <p>No tool history yet</p>
+                    <small>Start using PDF tools to see your history here</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Premium Tab -->
+        <div id="profileTabPremium" class="profile-tab-content">
+            <div class="premium-card">
+                <i class="fas fa-crown" style="font-size:2.5rem;margin-bottom:10px;display:block;"></i>
+                <h3>Premium Member</h3>
+                <p>You have access to all premium features!</p>
+            </div>
+
+            <ul class="premium-features-list">
+                <li><i class="fas fa-check-circle"></i> OCR PDF — Extract text from scans</li>
+                <li><i class="fas fa-check-circle"></i> Compare PDFs — Find differences</li>
+                <li><i class="fas fa-check-circle"></i> Flatten PDF — Merge all layers</li>
+                <li><i class="fas fa-check-circle"></i> Repair PDF — Fix corrupted files</li>
+                <li><i class="fas fa-check-circle"></i> Digital Signature — Sign documents</li>
+                <li><i class="fas fa-check-circle"></i> Batch Processing — Process many files</li>
+                <li><i class="fas fa-check-circle"></i> Form Detection — Auto detect fields</li>
+                <li><i class="fas fa-check-circle"></i> Barcode Reader — Read PDF barcodes</li>
+                <li><i class="fas fa-check-circle"></i> Image Watermark — Stamp watermarks</li>
+            </ul>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="profileTabSettings" class="profile-tab-content">
+
+            <div class="settings-section">
+                <h4>Preferences</h4>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Email Notifications</div>
+                        <div class="settings-desc">Receive updates and tips</div>
+                    </div>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="settingNotifications" checked>
+                        <span class="settings-toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Auto Save History</div>
+                        <div class="settings-desc">Save tool usage history</div>
+                    </div>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="settingHistory" checked>
+                        <span class="settings-toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Dark Mode</div>
+                        <div class="settings-desc">Switch to dark theme</div>
+                    </div>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="settingDarkMode" onchange="applyDarkMode(this.checked)">
+                        <span class="settings-toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4>Account</h4>
+                <div class="settings-row" id="changePasswordRow">
+                    <div>
+                        <div class="settings-label">Change Password</div>
+                        <div class="settings-desc">Update your password</div>
+                    </div>
+                    <button class="profile-edit-btn" onclick="showChangePassword()">Change</button>
+                </div>
+                <div id="changePasswordForm" style="display:none;padding:12px 0;">
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="newPassword" placeholder="Enter new password">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="confirmNewPassword" placeholder="Confirm new password">
+                    </div>
+                    <button class="settings-save-btn" onclick="saveNewPassword()">Save Password</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4>Save Settings</h4>
+                <button class="settings-save-btn" onclick="saveSettings()">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+
+            <div class="settings-section">
+                <h4>Danger Zone</h4>
+                <button class="settings-danger-btn" onclick="clearHistory()">
+                    <i class="fas fa-trash"></i> Clear My History
+                </button>
+                <button class="settings-danger-btn" onclick="handleLogout()" style="margin-top:8px;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
 </body>
 </html>
