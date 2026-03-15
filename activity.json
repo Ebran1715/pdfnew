@@ -1,7 +1,7 @@
 [
   {
-    "id": 1773470561687,
-    "timestamp": "2026-03-14T06:42:41.687Z",
+    "id": 1773550883938,
+    "timestamp": "2026-03-15T05:01:23.938Z",
     "type": "tool_use",
     "email": "guest",
     "tool": "protect-pdf",
@@ -9,28 +9,55 @@
     "filesize": 2538724
   },
   {
-    "id": 1773470561248,
-    "timestamp": "2026-03-14T06:42:41.248Z",
+    "id": 1773550883270,
+    "timestamp": "2026-03-15T05:01:23.270Z",
     "type": "tool_use",
-    "email": "ebran@gmail.com",
+    "email": "sana@gmail.com",
     "tool": "protect",
     "filename": "ccna.pdf",
     "filesize": 2538724
   },
   {
-    "id": 1773470541135,
-    "timestamp": "2026-03-14T06:42:21.135Z",
-    "type": "login",
-    "email": "ebran@gmail.com",
-    "ip": "::1"
-  },
-  {
-    "id": 1773470462461,
-    "timestamp": "2026-03-14T06:41:02.461Z",
+    "id": 1773485551863,
+    "timestamp": "2026-03-14T10:52:31.863Z",
     "type": "tool_use",
     "email": "guest",
-    "tool": "merge",
-    "filename": "",
-    "filesize": 0
+    "tool": "protect-pdf",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773485551763,
+    "timestamp": "2026-03-14T10:52:31.763Z",
+    "type": "tool_use",
+    "email": "sana@gmail.com",
+    "tool": "protect",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773485214401,
+    "timestamp": "2026-03-14T10:46:54.401Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773485214048,
+    "timestamp": "2026-03-14T10:46:54.048Z",
+    "type": "tool_use",
+    "email": "sana@gmail.com",
+    "tool": "encrypt",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773485196570,
+    "timestamp": "2026-03-14T10:46:36.570Z",
+    "type": "login",
+    "email": "sana@gmail.com",
+    "ip": "::1"
   }
 ]

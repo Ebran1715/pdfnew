@@ -94,14 +94,15 @@
         }
 
         .nav-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 80px;
-        }
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 30px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 80px;
+    gap: 0;
+}
 
         .logo {
             font-size: 2rem;
@@ -2296,66 +2297,490 @@
         font-size: 16px !important; /* Prevents zoom on focus in iOS */
     }
 }
+
+/* ── SIDEBAR ── */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    backdrop-filter: blur(2px);
+}
+.sidebar-overlay.active { display: block; }
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 300px;
+    height: 100vh;
+    background: #0f172a;
+    z-index: 300;
+    overflow-y: auto;
+    transition: left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+.sidebar.open { left: 0; }
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    position: sticky;
+    top: 0;
+    background: #0f172a;
+    z-index: 1;
+}
+.sidebar-header span {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.2px;
+}
+.sidebar-close {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: rgba(255,255,255,0.7);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.sidebar-close:hover { background: rgba(255,255,255,0.15); color: white; }
+
+.sidebar-body { padding: 10px 0 20px; flex: 1; }
+
+.sidebar-category { margin-bottom: 4px; }
+
+.sidebar-cat-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.75);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+}
+.sidebar-cat-btn:hover { background: rgba(255,255,255,0.06); color: white; }
+.sidebar-cat-btn .cat-left { display: flex; align-items: center; gap: 10px; }
+.sidebar-cat-btn .cat-icon { font-size: 15px; }
+.sidebar-cat-btn .cat-chevron {
+    font-size: 10px;
+    transition: transform 0.2s;
+    opacity: 0.5;
+}
+.sidebar-cat-btn.expanded .cat-chevron { transform: rotate(90deg); }
+
+.sidebar-tools {
+    display: none;
+    padding: 2px 0 6px;
+}
+.sidebar-tools.open { display: block; }
+
+.sidebar-tool-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 18px 8px 44px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+}
+.sidebar-tool-btn:hover {
+    background: rgba(59,130,246,0.12);
+    color: #93c5fd;
+    padding-left: 50px;
+}
+.sidebar-tool-btn .tool-emoji { font-size: 14px; }
+.sidebar-tool-btn .premium-dot {
+    margin-left: auto;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
+    flex-shrink: 0;
+}
+
+.btn-sidebar-toggle {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.8);
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+    margin-right: 8px;
+}
+.btn-sidebar-toggle:hover { background: rgba(255,255,255,0.15); color: white; }
+
+/* ══════ SEMRUSH STYLE DASHBOARD ══════ */
+.semrush-trigger { position: relative; }
+
+.semrush-nav-link {
+    color: rgba(255,255,255,0.8) !important;
+    font-weight: 500;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 5px 0;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.semrush-nav-link:hover { color: #fff !important; }
+
+.semrush-nav-link.open { color: #fff !important; }
+
+.semrush-arrow {
+    font-size: 12px;
+    transition: transform 0.2s;
+    opacity: 0.7;
+}
+
+.semrush-nav-link.open .semrush-arrow {
+    transform: rotate(180deg);
+}
+
+/* Full-width panel */
+.semrush-panel {
+    display: none;
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 3px solid #3b82f6;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    animation: semrushSlide 0.2s ease;
+}
+
+@keyframes semrushSlide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.semrush-panel.open { display: block; }
+
+.semrush-panel-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    min-height: 400px;
+    max-height: 520px;
+}
+
+/* Left sidebar - categories */
+.semrush-cats {
+    width: 240px;
+    flex-shrink: 0;
+    background: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+    padding: 16px 0;
+    overflow-y: auto;
+}
+
+.semrush-cat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: all 0.12s;
+    border-left: 3px solid transparent;
+    gap: 10px;
+}
+
+.semrush-cat-item:hover {
+    background: #fff;
+    border-left-color: #d1d5db;
+}
+
+.semrush-cat-item.active {
+    background: #fff;
+    border-left-color: #3b82f6;
+}
+
+.semrush-cat-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.semrush-cat-emoji { font-size: 18px; }
+
+.semrush-cat-info { flex: 1; }
+
+.semrush-cat-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    display: block;
+}
+
+.semrush-cat-item.active .semrush-cat-name,
+.semrush-cat-item:hover .semrush-cat-name { color: #3b82f6; }
+
+.semrush-cat-desc {
+    font-size: 11px;
+    color: #9ca3af;
+    display: block;
+    margin-top: 1px;
+}
+
+.semrush-cat-count {
+    font-size: 10px;
+    font-weight: 700;
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 2px 7px;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.semrush-cat-item.active .semrush-cat-count {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+/* Right column - tools */
+.semrush-tools-col {
+    flex: 1;
+    padding: 20px 24px;
+    overflow-y: auto;
+}
+
+.semrush-tools-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.semrush-view-all {
+    font-size: 11px;
+    font-weight: 600;
+    color: #3b82f6;
+    text-decoration: none;
+    text-transform: none;
+    letter-spacing: 0;
+}
+.semrush-view-all:hover { text-decoration: underline; }
+
+.semrush-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.semrush-tool-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.12s;
+    border: 1px solid transparent;
+    text-align: left;
+    background: none;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+}
+
+.semrush-tool-card:hover {
+    background: #f0f9ff;
+    border-color: #bae6fd;
+}
+
+.semrush-tool-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: background 0.12s;
+}
+
+.semrush-tool-card:hover .semrush-tool-icon { background: #e0f2fe; }
+
+.semrush-tool-info { flex: 1; min-width: 0; }
+
+.semrush-tool-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #111827;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.semrush-tool-card:hover .semrush-tool-name { color: #2563eb; }
+
+.semrush-tool-desc {
+    font-size: 11px;
+    color: #9ca3af;
+    display: block;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.semrush-pro-badge {
+    font-size: 9px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    padding: 2px 5px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+/* Backdrop */
+.semrush-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    top: 80px;
+    z-index: 998;
+    background: rgba(0,0,0,0.3);
+}
+.semrush-backdrop.open { display: block; }
     </style>
 </head>
 <body>
     <!-- Header - Black -->
-    <header class="header">
-        <nav class="nav-container">
-            <a href="#" class="logo">
-                <span class="logo-icon">📄</span>
-                <span>PDFWorks Pro</span>
-            </a>
-            <div class="nav-links">
-                <a href="#organize">Organize</a>
-                <a href="#optimize">Optimize</a>
-                <a href="#convert">Convert</a>
-                <a href="#edit">Edit</a>
-                <a href="#security">Security</a>
-                <a href="#advanced">Advanced</a>
+    <!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- Side Navbar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <span>📄 PDF Tools</span>
+        <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+    </div>
+    <div class="sidebar-body" id="sidebarBody">
+        <!-- populated by JS -->
+    </div>
+</div>
+
+<header class="header">
+    <nav class="nav-container">
+        <a href="#" class="logo">
+            <span class="logo-icon">📄</span>
+            <span>PDFWorks Pro</span>
+        </a>
+        <div class="nav-links" style="margin-left: auto; margin-right: 20px;">
+            <!-- Dashboard trigger -->
+            <div class="semrush-trigger" id="semrushTrigger">
+                <a href="#" class="semrush-nav-link" onclick="return false;">
+                    Dashboard <span class="semrush-arrow">▾</span>
+                </a>
             </div>
-            <div id="authContainer">
-                <div class="auth-buttons" id="authButtons">
-                    <button class="btn-login" onclick="openAuthModal('login')">
-                        <i class="fas fa-sign-in-alt"></i> Login
-                    </button>
-                    <button class="btn-signup" onclick="openAuthModal('signup')">
-                        <i class="fas fa-user-plus"></i> Sign Up
-                    </button>
-                </div>
-                <div class="user-menu" id="userMenu" style="display: none;">
-                    <div class="user-avatar" id="userAvatar">JD</div>
-                    <div class="user-dropdown" id="userDropdown">
-                        <div class="dropdown-header">
-                            <h4 id="userName">John Doe</h4>
-                            <p id="userEmail">john@example.com</p>
-                        </div>
-                        <div class="dropdown-item">
-                            <i class="fas fa-user"></i>
-                            <span>My Profile</span>
-                        </div>
-                        <div class="dropdown-item">
-                            <i class="fas fa-history"></i>
-                            <span>History</span>
-                        </div>
-                        <div class="dropdown-item">
-                            <i class="fas fa-crown" style="color: #f59e0b;"></i>
-                            <span>Upgrade to Premium</span>
-                        </div>
-                        <div class="dropdown-item">
-                            <i class="fas fa-cog"></i>
-                            <span>Settings</span>
-                        </div>
-                        <div class="dropdown-item logout" onclick="handleLogout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </div>
+            <a href="#organize">Organize</a>
+            <a href="#optimize">Optimize</a>
+            <a href="#convert">Convert</a>
+            <a href="#edit">Edit</a>
+            <a href="#security">Security</a>
+            <a href="#advanced">Advanced</a>
+        </div>
+        <div id="authContainer" style="margin-left: auto;">
+            <div class="auth-buttons" id="authButtons">
+                <button class="btn-login" onclick="openAuthModal('login')">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <button class="btn-signup" onclick="openAuthModal('signup')">
+                    <i class="fas fa-user-plus"></i> Sign Up
+                </button>
+            </div>
+            <div class="user-menu" id="userMenu" style="display: none;">
+                <div class="user-avatar" id="userAvatar">JD</div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <h4 id="userName">John Doe</h4>
+                        <p id="userEmail">john@example.com</p>
+                    </div>
+                    <div class="dropdown-item">
+                        <i class="fas fa-user"></i><span>My Profile</span>
+                    </div>
+                    <div class="dropdown-item">
+                        <i class="fas fa-history"></i><span>History</span>
+                    </div>
+                    <div class="dropdown-item">
+                        <i class="fas fa-crown" style="color:#f59e0b;"></i>
+                        <span>Upgrade to Premium</span>
+                    </div>
+                    <div class="dropdown-item">
+                        <i class="fas fa-cog"></i><span>Settings</span>
+                    </div>
+                    <div class="dropdown-item logout" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i><span>Logout</span>
                     </div>
                 </div>
             </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
+</header>
 
+<!-- SEMrush-style full width dropdown panel -->
+<div class="semrush-panel" id="semrushPanel">
+    <div class="semrush-panel-inner">
+        <!-- Left: Categories -->
+        <div class="semrush-cats" id="semrushCats"></div>
+        <!-- Right: Tools -->
+        <div class="semrush-tools-col" id="semrushToolsCol">
+            <div class="semrush-tools-title" id="semrushToolsTitle"></div>
+            <div class="semrush-tools-grid" id="semrushToolsGrid"></div>
+        </div>
+    </div>
+</div>
+<div class="semrush-backdrop" id="semrushBackdrop" onclick="closeSemrush()"></div>
     <!-- Sign In / Sign Up Modal -->
     <div id="authModal" class="auth-modal">
         <div class="auth-content">
@@ -6622,7 +7047,7 @@ async function protectPDF(tool) {
             }
         }
 
-        const response = await fetch('https://working-pdf.onrender.com/api/protect-pdf', {
+        const response = await fetch('http://localhost:3009/api/protect-pdf', {
             method: 'POST',
             headers: {},
             body: formData
@@ -6700,7 +7125,7 @@ async function testUpload(tool = 'protect') {
         console.log('  ', key, value);
     }
 
-    const response = await fetch('https://working-pdf.onrender.com/api/test-upload', {
+    const response = await fetch('http://localhost:3009/api/test-upload', {
         method: 'POST',
         headers: {},
         body: formData
@@ -6731,7 +7156,7 @@ async function unprotectPDF(tool) {
         formData.append('file', fileObj, fileObj.name);
         formData.append('password', password);
 
-        const response = await fetch('https://working-pdf.onrender.com/api/unprotect-pdf', {
+        const response = await fetch('http://localhost:3009/api/unprotect-pdf', {
             method: 'POST',
             headers: {},
             body: formData
@@ -6838,7 +7263,7 @@ async function encryptPDF(tool) {
         formData.append('file', fileObj, fileObj.name);
         formData.append('password', password);
 
-        const response = await fetch('https://working-pdf.onrender.com/api/protect-pdf', {
+        const response = await fetch('http://localhost:3009/api/protect-pdf', {
             method: 'POST',
             headers: {},
             body: formData
@@ -14097,7 +14522,7 @@ document.addEventListener('change', function(e) {
         // <!-- BACKEND INTEGRATION - PREMIUM ONLY FOR LOGGED-IN USERS -->
 
     // ==================== BACKEND INTEGRATION ====================
-    const API_BASE_URL = 'https://working-pdf.onrender.com/api';
+    const API_BASE_URL = 'http://localhost:3009/api';
     
     (function() {
         console.log('🔌 Connecting to backend at:', API_BASE_URL);
@@ -14474,7 +14899,7 @@ function logToolActivity(tool) {
     const filename = fileObj?.name || '';
     const filesize = fileObj?.size || 0;
 
-    fetch('https://working-pdf.onrender.com/api/log-tool', {
+    fetch('http://localhost:3009/api/log-tool', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -14487,6 +14912,186 @@ function logToolActivity(tool) {
 }
 
 
+
+// ══════ SEMRUSH STYLE DASHBOARD ══════
+const SEMRUSH_CATS = [
+    {
+        id: 'organize', name: 'Organize PDF', emoji: '📁',
+        desc: 'Merge, split, rotate pages', anchor: '#organize',
+        tools: [
+            { id: 'merge',    name: 'Merge PDF',      emoji: '📑', desc: 'Combine multiple PDFs' },
+            { id: 'split',    name: 'Split PDF',       emoji: '✂️', desc: 'Separate into pages' },
+            { id: 'organize', name: 'Organize Pages',  emoji: '🔄', desc: 'Reorder your pages' },
+            { id: 'rotate',   name: 'Rotate PDF',      emoji: '↻',  desc: 'Fix page orientation' },
+            { id: 'delete',   name: 'Delete Pages',    emoji: '🗑️', desc: 'Remove unwanted pages' },
+            { id: 'extract',  name: 'Extract Pages',   emoji: '📤', desc: 'Pull out specific pages' },
+        ]
+    },
+    {
+        id: 'optimize', name: 'Optimize PDF', emoji: '📊',
+        desc: 'Compress and reduce size', anchor: '#optimize',
+        tools: [
+            { id: 'compress',        name: 'Compress PDF',    emoji: '🗜️', desc: 'Reduce file size' },
+            { id: 'optimize',        name: 'Optimize PDF',    emoji: '📊', desc: 'Full optimization' },
+            { id: 'optimize-images', name: 'Optimize Images', emoji: '🖼️', desc: 'Compress embedded images' },
+        ]
+    },
+    {
+        id: 'convert-from', name: 'Convert from PDF', emoji: '🔁',
+        desc: 'Export PDF to other formats', anchor: '#convert',
+        tools: [
+            { id: 'pdf-to-jpg',   name: 'PDF to JPG',        emoji: '🖼️', desc: 'Export pages as images' },
+            { id: 'pdf-to-png',   name: 'PDF to PNG',        emoji: '🎨', desc: 'Convert to PNG images' },
+            { id: 'pdf-to-word',  name: 'PDF to Word',       emoji: '📝', desc: 'Editable Word document' },
+            { id: 'pdf-to-excel', name: 'PDF to Excel',      emoji: '📊', desc: 'Extract data to Excel' },
+            { id: 'pdf-to-ppt',   name: 'PDF to PowerPoint', emoji: '📽️', desc: 'Editable presentation' },
+            { id: 'pdf-to-txt',   name: 'PDF to Text',       emoji: '📄', desc: 'Extract all text' },
+            { id: 'pdf-to-html',  name: 'PDF to HTML',       emoji: '🌐', desc: 'Convert to webpage' },
+        ]
+    },
+    {
+        id: 'convert-to', name: 'Convert to PDF', emoji: '📥',
+        desc: 'Create PDFs from any file', anchor: '#convert',
+        tools: [
+            { id: 'jpg-to-pdf',  name: 'JPG to PDF',   emoji: '🖼️', desc: 'Images into PDF' },
+            { id: 'png-to-pdf',  name: 'PNG to PDF',   emoji: '🎨', desc: 'PNG images to PDF' },
+            { id: 'word-to-pdf', name: 'Word to PDF',  emoji: '📝', desc: 'Convert Word docs' },
+            { id: 'excel-to-pdf',name: 'Excel to PDF', emoji: '📊', desc: 'Spreadsheets to PDF' },
+            { id: 'ppt-to-pdf',  name: 'PPT to PDF',   emoji: '📽️', desc: 'Slides to PDF' },
+            { id: 'html-to-pdf', name: 'HTML to PDF',  emoji: '🌐', desc: 'Webpages to PDF' },
+            { id: 'text-to-pdf', name: 'Text to PDF',  emoji: '📝', desc: 'Plain text to PDF' },
+        ]
+    },
+    {
+        id: 'edit', name: 'Edit PDF', emoji: '✏️',
+        desc: 'Add text, images, watermarks', anchor: '#edit',
+        tools: [
+            { id: 'watermark',    name: 'Add Watermark',  emoji: '💧', desc: 'Stamp text watermark' },
+            { id: 'page-numbers', name: 'Page Numbers',   emoji: '🔢', desc: 'Number your pages' },
+            { id: 'add-text',     name: 'Add Text',       emoji: '📝', desc: 'Insert custom text' },
+            { id: 'add-image',    name: 'Add Image',      emoji: '🖼️', desc: 'Embed an image' },
+            { id: 'add-signature',name: 'Add Signature',  emoji: '✍️', desc: 'Draw or type signature' },
+        ]
+    },
+    {
+        id: 'security', name: 'Security', emoji: '🔒',
+        desc: 'Protect and encrypt PDFs', anchor: '#security',
+        tools: [
+            { id: 'protect',  name: 'Protect PDF',   emoji: '🔐', desc: 'Add password protection' },
+            { id: 'unlock',   name: 'Unlock PDF',    emoji: '🔓', desc: 'Remove password lock' },
+            { id: 'redact',   name: 'Redact PDF',    emoji: '🔴', desc: 'Hide sensitive content' },
+            { id: 'encrypt',  name: 'Encrypt PDF',   emoji: '🔒', desc: 'Strong AES encryption' },
+            { id: 'metadata', name: 'Edit Metadata', emoji: '📋', desc: 'Edit document properties' },
+        ]
+    },
+    {
+        id: 'advanced', name: 'Premium Tools', emoji: '👑',
+        desc: 'Advanced AI-powered tools', anchor: '#advanced',
+        tools: [
+            { id: 'ocr',               name: 'OCR PDF',          emoji: '🔍', desc: 'Extract text from scans',    premium: true },
+            { id: 'compare',           name: 'Compare PDFs',     emoji: '⚖️', desc: 'Find differences',           premium: true },
+            { id: 'flatten',           name: 'Flatten PDF',      emoji: '🔨', desc: 'Merge all layers',            premium: true },
+            { id: 'repair',            name: 'Repair PDF',       emoji: '🔧', desc: 'Fix corrupted files',         premium: true },
+            { id: 'digital-signature', name: 'Digital Signature',emoji: '📜', desc: 'Certify documents',          premium: true },
+            { id: 'batch-process',     name: 'Batch Processing', emoji: '⚡', desc: 'Process many at once',        premium: true },
+            { id: 'form-detection',    name: 'Form Detection',   emoji: '📋', desc: 'Auto-detect form fields',     premium: true },
+            { id: 'barcode',           name: 'Barcode Reader',   emoji: '📊', desc: 'Read PDF barcodes',           premium: true },
+            { id: 'watermark-image',   name: 'Image Watermark',  emoji: '🖼️', desc: 'Stamp image watermark',      premium: true },
+        ]
+    },
+];
+
+let activeSemrushCat = 'organize';
+let semrushOpen = false;
+
+function buildSemrushPanel() {
+    const catsEl = document.getElementById('semrushCats');
+    if (!catsEl) return;
+
+    catsEl.innerHTML = SEMRUSH_CATS.map(cat => `
+        <div class="semrush-cat-item ${cat.id === activeSemrushCat ? 'active' : ''}"
+             id="srCat_${cat.id}"
+             onmouseenter="switchSemrushCat('${cat.id}')">
+            <div class="semrush-cat-left">
+                <span class="semrush-cat-emoji">${cat.emoji}</span>
+                <div class="semrush-cat-info">
+                    <span class="semrush-cat-name">${cat.name}</span>
+                    <span class="semrush-cat-desc">${cat.desc}</span>
+                </div>
+            </div>
+            <span class="semrush-cat-count">${cat.tools.length}</span>
+        </div>
+    `).join('');
+
+    renderSemrushTools(activeSemrushCat);
+}
+
+function switchSemrushCat(catId) {
+    activeSemrushCat = catId;
+    document.querySelectorAll('.semrush-cat-item').forEach(el => el.classList.remove('active'));
+    const el = document.getElementById('srCat_' + catId);
+    if (el) el.classList.add('active');
+    renderSemrushTools(catId);
+}
+
+function renderSemrushTools(catId) {
+    const cat       = SEMRUSH_CATS.find(c => c.id === catId);
+    const titleEl   = document.getElementById('semrushToolsTitle');
+    const gridEl    = document.getElementById('semrushToolsGrid');
+    if (!cat || !gridEl) return;
+
+    if (titleEl) {
+        titleEl.innerHTML = `
+    <span>${cat.emoji} ${cat.name}</span>
+    <a class="semrush-view-all" href="${cat.anchor}" onclick="closeSemrush()">View all →</a>
+`;
+    }
+
+    gridEl.innerHTML = cat.tools.map(t => `
+        <button class="semrush-tool-card" onclick="openTool('${t.id}'); closeSemrush();">
+            <div class="semrush-tool-icon">${t.emoji}</div>
+            <div class="semrush-tool-info">
+                <span class="semrush-tool-name">${t.name}</span>
+                <span class="semrush-tool-desc">${t.desc}</span>
+            </div>
+            ${t.premium ? '<span class="semrush-pro-badge">PRO</span>' : ''}
+        </button>
+    `).join('');
+}
+
+function toggleSemrush() {
+    semrushOpen ? closeSemrush() : openSemrush();
+}
+
+function openSemrush() {
+    semrushOpen = true;
+    document.getElementById('semrushPanel').classList.add('open');
+    document.getElementById('semrushBackdrop').classList.add('open');
+    const link = document.querySelector('.semrush-nav-link');
+    if (link) link.classList.add('open');
+}
+
+function closeSemrush() {
+    semrushOpen = false;
+    document.getElementById('semrushPanel').classList.remove('open');
+    document.getElementById('semrushBackdrop').classList.remove('open');
+    const link = document.querySelector('.semrush-nav-link');
+    if (link) link.classList.remove('open');
+}
+
+// Toggle on click, close on outside click
+document.addEventListener('DOMContentLoaded', () => {
+    buildSemrushPanel();
+
+    const trigger = document.getElementById('semrushTrigger');
+    if (trigger) {
+        trigger.addEventListener('click', toggleSemrush);
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeSemrush();
+    });
+});
 
 </script>
 </body>

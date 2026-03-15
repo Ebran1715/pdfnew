@@ -1,24 +1,86 @@
-const logger = require('./activity-logger');
-const express = require('express');
-const mysql = require('mysql');
+const logger   = require('./activity-logger');
+const express  = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const path = require('path');
-const fs = require('fs');
+const cors     = require('cors');
+const dotenv   = require('dotenv');
+const bcrypt   = require('bcryptjs');
+const jwt      = require('jsonwebtoken');
+const path     = require('path');
+const fs       = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const multer = require('multer');
+const multer   = require('multer');
 const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const { encryptPDFBuffer, decryptPDFBuffer, isPDFEncrypted } = require('./pdf-encryptor');
 
-
 dotenv.config();
+
+// ==================== ADMIN CREDENTIALS ====================
+const ADMIN_EMAIL    = 'admin@pdfworks.com'; // ← change this
+const ADMIN_PASSWORD = 'admin123';            // ← change this
+
+// ==================== JSON FILE DATABASE ====================
+const DB_FILE = path.join(__dirname, 'users.json');
+
+function readDB() {
+    try {
+        if (!fs.existsSync(DB_FILE)) {
+            fs.writeFileSync(DB_FILE, JSON.stringify({ users: [], sessions: [], activity: [] }));
+        }
+        return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    } catch(e) {
+        return { users: [], sessions: [], activity: [] };
+    }
+}
+
+function writeDB(data) {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+}
+
+function findUser(email) {
+    return readDB().users.find(u => u.email === email);
+}
+
+function saveUser(user) {
+    const db = readDB();
+    const idx = db.users.findIndex(u => u.id === user.id);
+    if (idx >= 0) db.users[idx] = user;
+    else db.users.push(user);
+    writeDB(db);
+}
+
+function saveSession(session) {
+    const db = readDB();
+    db.sessions.push(session);
+    // Keep last 1000 sessions only
+    if (db.sessions.length > 1000) db.sessions = db.sessions.slice(-1000);
+    writeDB(db);
+}
+
+function deleteSession(token) {
+    const db = readDB();
+    db.sessions = db.sessions.filter(s => s.token !== token);
+    writeDB(db);
+}
+
+function logUserActivity(userId, action, ip, extra = {}) {
+    const db = readDB();
+    db.activity.push({
+        id: uuidv4(),
+        user_id: userId,
+        action,
+        ip,
+        timestamp: new Date().toISOString(),
+        ...extra
+    });
+    if (db.activity.length > 10000) db.activity = db.activity.slice(-10000);
+    writeDB(db);
+}
+
+console.log('✅ Using JSON file database (no MySQL needed)');
 
 const app = express();
 
-// CORS configuration
+// ==================== CORS ====================
 app.use(cors({
     origin: true,
     credentials: true,
@@ -29,118 +91,57 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files
+// ==================== STATIC FILES ====================
 const publicDir = path.join(__dirname, 'public');
-if (!fs.existsSync(publicDir)) {
-    fs.mkdirSync(publicDir, { recursive: true });
-}
+if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 app.use(express.static(publicDir));
 
-// Create uploads directory
 const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 app.use('/uploads', express.static(uploadDir));
 
-// MySQL connection for XAMPP
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'pdfworks_db',
-    connectionLimit: 10
-};
-
-const pool = mysql.createPool(dbConfig);
-
-// Test database connection
-pool.getConnection((err, connection) => {
-    if (err) {
-        console.error('❌ Database connection failed:', err.message);
-        return;
-    }
-    console.log('✅ Connected to MySQL database');
-    connection.release();
-});
-
-// ==================== MULTER CONFIGURATION ====================
+// ==================== MULTER ====================
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
-        cb(null, uniqueName);
-    }
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename:    (req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`)
 });
 
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = [
-        'application/pdf', 'image/jpeg', 'image/png', 'image/jpg',
+    const allowed = [
+        'application/pdf','image/jpeg','image/png','image/jpg',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     ];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type'), false);
-    }
+    cb(null, allowed.includes(file.mimetype));
 };
 
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: { fileSize: 50 * 1024 * 1024 }
-});
+const upload = multer({ storage, fileFilter, limits: { fileSize: 50 * 1024 * 1024 } });
 
-// ==================== MIDDLEWARE ====================
+// ==================== AUTH MIDDLEWARE ====================
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-
-    console.log('🔐 Auth header received:', authHeader ? 'Present' : 'Missing');
-    console.log('🔑 Token:', token ? token.substring(0, 30) + '...' : 'No token');
-
-    if (!token) {
-        return res.status(401).json({ error: 'No token provided' });
-    }
+    if (!token) return res.status(401).json({ error: 'No token provided' });
 
     jwt.verify(token, 'your-secret-key', (err, user) => {
         if (err) {
-            console.log('❌ Token verification failed:', err.message);
-            if (err.name === 'TokenExpiredError') {
-                return res.status(403).json({ error: 'Token expired' });
-            }
-            if (err.name === 'JsonWebTokenError') {
-                return res.status(403).json({ error: 'Invalid token signature' });
-            }
+            if (err.name === 'TokenExpiredError')  return res.status(403).json({ error: 'Token expired' });
+            if (err.name === 'JsonWebTokenError')  return res.status(403).json({ error: 'Invalid token' });
             return res.status(403).json({ error: 'Invalid token: ' + err.message });
         }
-        console.log('✅ Token verified for user:', user.email || user.id);
         req.user = user;
         next();
     });
 };
 
 // ==================== ADMIN MIDDLEWARE ====================
-const ADMIN_EMAIL = 'admin@pdfworks.com';
-const ADMIN_PASSWORD = 'admin123'; // ← change this
-
-// Admin login route (no database)
 app.post('/api/admin/login', (req, res) => {
     const { email, password } = req.body;
-    console.log('🔑 Admin login attempt - email:', email, '| password:', password);
-    console.log('🔑 Expected - email:', ADMIN_EMAIL, '| password:', ADMIN_PASSWORD);
-    
+    console.log('🔑 Admin login attempt:', email);
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        const token = jwt.sign(
-            { email, role: 'admin' },
-            'your-secret-key',
-            { expiresIn: '24h' }
-        );
+        const token = jwt.sign({ email, role: 'admin' }, 'your-secret-key', { expiresIn: '24h' });
         res.json({ token, email });
     } else {
         res.status(401).json({ error: 'Invalid admin credentials' });
@@ -151,245 +152,144 @@ const requireAdmin = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token' });
-
     jwt.verify(token, 'your-secret-key', (err, user) => {
         if (err) return res.status(403).json({ error: 'Invalid token' });
-        if (user.role !== 'admin')
-            return res.status(403).json({ error: 'Admin access only' });
+        if (user.role !== 'admin') return res.status(403).json({ error: 'Admin access only' });
         req.user = user;
         next();
     });
 };
-
-// ==================== DEBUG TOKEN ENDPOINT ====================
-app.post('/api/debug-token', (req, res) => {
-    const { token } = req.body;
-    if (!token) {
-        return res.status(400).json({ error: 'No token provided' });
-    }
-    try {
-        const decoded = jwt.verify(token, 'your-secret-key');
-        res.json({
-            valid: true,
-            decoded,
-            expires: new Date(decoded.exp * 1000).toISOString()
-        });
-    } catch (err) {
-        res.json({ valid: false, error: err.message, name: err.name });
-    }
-});
 
 // ==================== AUTH ROUTES ====================
 
 // Register
 app.post('/api/auth/register', async (req, res) => {
     const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
+    if (!name || !email || !password)
         return res.status(400).json({ error: 'All fields are required' });
-    }
+
+    if (findUser(email))
+        return res.status(400).json({ error: 'Email already registered' });
 
     try {
-        pool.query('SELECT id FROM users WHERE email = ?', [email], async (err, results) => {
-            if (err) return res.status(500).json({ error: 'Database error' });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = {
+            id: uuidv4(),
+            name,
+            email,
+            password: hashedPassword,
+            is_premium: false,
+            created_at: new Date().toISOString(),
+            last_login: null
+        };
+        saveUser(user);
 
-            if (results.length > 0) {
-                return res.status(400).json({ error: 'Email already registered' });
-            }
+        const token = jwt.sign({ id: user.id, email, name }, 'your-secret-key', { expiresIn: '7d' });
+        logger.logLogin(email, req.ip || '127.0.0.1');
 
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const userUuid = uuidv4();
-
-            pool.query(
-                'INSERT INTO users (uuid, name, email, password, is_premium) VALUES (?, ?, ?, ?, ?)',
-                [userUuid, name, email, hashedPassword, false],
-                (err, result) => {
-                    if (err) {
-                        console.error('Insert error:', err);
-                        return res.status(500).json({ error: 'Failed to create user' });
-                    }
-
-                    const token = jwt.sign(
-                        { id: result.insertId, email, name },
-                        'your-secret-key',
-                        { expiresIn: '7d' }
-                    );
-
-                    logger.logLogin(email, '127.0.0.1');
-
-                    res.status(201).json({
-                        message: 'User created successfully',
-                        token,
-                        user: { id: result.insertId, name, email, is_premium: false }
-                    });
-                }
-            );
+        res.status(201).json({
+            message: 'User created successfully',
+            token,
+            user: { id: user.id, name, email, is_premium: false }
         });
-    } catch (error) {
-        console.error('Registration error:', error);
+    } catch(err) {
+        console.error('Register error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
 // Login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
-
-    if (!email || !password) {
+    if (!email || !password)
         return res.status(400).json({ error: 'Email and password are required' });
-    }
 
-    pool.query(
-        'SELECT id, name, email, password, is_premium FROM users WHERE email = ?',
-        [email],
-        async (err, results) => {
-            if (err) {
-                console.error('Login query error:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
+    const user = findUser(email);
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-            if (results.length === 0) {
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-            const user = results[0];
-
-            const validPassword = await bcrypt.compare(password, user.password);
-            if (!validPassword) {
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
-
-            const token = jwt.sign(
-                { id: user.id, email: user.email, name: user.name },
-                'your-secret-key',
-                { expiresIn: '7d' }
-            );
-
-            // Save session to DB
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 7);
-            pool.query(
-                'INSERT INTO user_sessions (user_id, token, ip_address, expires_at) VALUES (?, ?, ?, ?)',
-                [user.id, token, req.ip || '127.0.0.1', expiresAt],
-                (err) => { if (err) console.error('Failed to create session:', err); }
-            );
-
-            // Log to DB
-            pool.query(
-                'INSERT INTO user_activity (user_id, action, ip_address) VALUES (?, ?, ?)',
-                [user.id, 'login', req.ip || '127.0.0.1'],
-                (err) => { if (err) console.error('Failed to log activity:', err); }
-            );
-
-            // Update last login
-            pool.query('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
-
-            // ✅ Log to activity.json
-            logger.logLogin(user.email, req.ip || '127.0.0.1');
-
-            res.json({
-                message: 'Login successful',
-                token,
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    is_premium: user.is_premium === 1 ? true : false
-                }
-            });
-        }
+    const token = jwt.sign(
+        { id: user.id, email: user.email, name: user.name },
+        'your-secret-key',
+        { expiresIn: '7d' }
     );
+
+    // Save session
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    saveSession({ user_id: user.id, token, ip: req.ip || '127.0.0.1', expires_at: expiresAt.toISOString() });
+
+    // Update last login
+    user.last_login = new Date().toISOString();
+    saveUser(user);
+
+    logUserActivity(user.id, 'login', req.ip || '127.0.0.1');
+    logger.logLogin(user.email, req.ip || '127.0.0.1');
+
+    res.json({
+        message: 'Login successful',
+        token,
+        user: { id: user.id, name: user.name, email: user.email, is_premium: user.is_premium }
+    });
 });
 
 // Logout
 app.post('/api/auth/logout', authenticateToken, (req, res) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-
-    pool.query(
-        'DELETE FROM user_sessions WHERE token = ?',
-        [token],
-        (err) => { if (err) console.error('Logout error:', err); }
-    );
-
-    pool.query(
-        'INSERT INTO user_activity (user_id, action, ip_address) VALUES (?, ?, ?)',
-        [req.user.id, 'logout', req.ip],
-        (err) => { if (err) console.error('Failed to log activity:', err); }
-    );
-
-    // ✅ Log to activity.json
+    deleteSession(token);
+    logUserActivity(req.user.id, 'logout', req.ip || '127.0.0.1');
     logger.logLogout(req.user.email, req.ip || '127.0.0.1');
-
     res.json({ message: 'Logged out successfully' });
 });
 
-// ==================== FILE UPLOAD ROUTES ====================
-app.post('/api/files/upload', authenticateToken, upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    const fileUuid = uuidv4();
-    const userId = req.user.id;
-
-    pool.query(
-        `INSERT INTO user_files (user_id, file_uuid, original_name, file_path, file_size, mime_type)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, fileUuid, req.file.originalname, req.file.filename, req.file.size, req.file.mimetype],
-        (err, result) => {
-            if (err) {
-                console.error('File record error:', err);
-                fs.unlinkSync(req.file.path);
-                return res.status(500).json({ error: 'Failed to save file record' });
-            }
-
-            pool.query(
-                'INSERT INTO user_activity (user_id, action, tool_used, file_name, file_size, ip_address) VALUES (?, ?, ?, ?, ?, ?)',
-                [userId, 'file_upload', req.body.tool || 'upload', req.file.originalname, req.file.size, req.ip],
-                (err) => { if (err) console.error('Failed to log activity:', err); }
-            );
-
-            res.json({
-                message: 'File uploaded successfully',
-                file: {
-                    id: result.insertId,
-                    uuid: fileUuid,
-                    name: req.file.originalname,
-                    size: req.file.size,
-                    path: `/uploads/${req.file.filename}`
-                }
-            });
+// Get current user
+app.get('/api/auth/me', authenticateToken, (req, res) => {
+    const user = readDB().users.find(u => u.id === req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+        user: {
+            id: user.id, name: user.name, email: user.email,
+            is_premium: user.is_premium,
+            created_at: user.created_at, last_login: user.last_login
         }
-    );
+    });
+});
+
+// ==================== USER STATS ====================
+app.get('/api/stats', authenticateToken, (req, res) => {
+    const db       = readDB();
+    const activity = db.activity.filter(a => a.user_id === req.user.id);
+    const today    = new Date().toISOString().split('T')[0];
+    res.json({
+        stats: {
+            total_activities:  activity.length,
+            today_activities:  activity.filter(a => a.timestamp.startsWith(today)).length,
+            tools_used:        new Set(activity.filter(a => a.tool).map(a => a.tool)).size,
+            active_sessions:   db.sessions.filter(s => s.user_id === req.user.id && new Date(s.expires_at) > new Date()).length
+        }
+    });
 });
 
 // ==================== PROTECT PDF ====================
 app.post('/api/protect-pdf', upload.single('file'), async (req, res) => {
     try {
-        console.log("🔒 Protect route hit");
         const password = req.body.password;
-        console.log("📦 Received password:", password);
-
         if (!password) return res.status(400).json({ error: 'Password missing' });
-        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        if (!req.file)  return res.status(400).json({ error: 'No file uploaded' });
 
-        const pdfBuffer = fs.readFileSync(req.file.path);
-        console.log("🔐 Encrypting PDF with pure JS...");
+        const pdfBuffer      = fs.readFileSync(req.file.path);
         const encryptedBuffer = await encryptPDFBuffer(pdfBuffer, password);
-        console.log("✅ Encryption done");
-
-        // ✅ Log to activity.json
         logger.logToolUse(req.user?.email || 'guest', 'protect-pdf', req.file.originalname, req.file.size);
-
         fs.unlinkSync(req.file.path);
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="protected.pdf"');
         res.send(encryptedBuffer);
-
-    } catch (err) {
-        console.error("❌ Protect PDF error:", err);
+    } catch(err) {
+        console.error('Protect PDF error:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -404,212 +304,73 @@ app.post('/api/unprotect-pdf', upload.single('file'), async (req, res) => {
         fs.unlink(req.file.path, () => {});
 
         const decrypted = await decryptPDFBuffer(pdfBuffer, password);
-
-        // ✅ Log to activity.json
         logger.logToolUse(req.user?.email || 'guest', 'unprotect-pdf', req.file.originalname, req.file.size);
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="unlocked.pdf"');
         res.send(decrypted);
-
-    } catch (err) {
-        console.error('❌ Unprotect PDF error:', err.message);
-        if (err.message === 'Incorrect password') {
+    } catch(err) {
+        console.error('Unprotect PDF error:', err.message);
+        if (err.message === 'Incorrect password')
             return res.status(400).json({ error: 'Incorrect password' });
-        }
         res.status(500).json({ error: err.message });
     }
 });
 
-// ==================== LOG ALL TOOLS (frontend calls this) ====================
+// ==================== LOG ALL TOOLS ====================
 app.post('/api/log-tool', (req, res) => {
-    const { tool, filename, filesize, email } = req.body;
-    logger.logToolUse(email || 'guest', tool, filename, filesize);
+    const { tool, filename, filesize, email, type } = req.body;
+    if (type === 'download') {
+        logger.logDownload(email || 'guest', tool, filename);
+    } else {
+        logger.logToolUse(email || 'guest', tool, filename, filesize);
+    }
     res.json({ ok: true });
 });
 
-// ==================== TOOL USAGE ROUTES (DB) ====================
-app.post('/api/activity/tool', authenticateToken, (req, res) => {
-    const { tool, action, fileName, fileSize, details } = req.body;
-    pool.query(
-        `INSERT INTO user_activity (user_id, action, tool_used, file_name, file_size, details, ip_address)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [req.user.id, action || 'tool_use', tool, fileName, fileSize, details ? JSON.stringify(details) : null, req.ip],
-        (err) => {
-            if (err) {
-                console.error('Failed to log activity:', err);
-                return res.status(500).json({ error: 'Failed to log activity' });
-            }
-            res.json({ message: 'Activity logged' });
-        }
-    );
-});
-
+// ==================== ACTIVITY ROUTES ====================
 app.post('/api/activity/view', authenticateToken, (req, res) => {
-    const { tool, fileName, fileId } = req.body;
-    pool.query(
-        `INSERT INTO user_activity (user_id, action, tool_used, file_name, details, ip_address)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [req.user.id, 'view', tool, fileName, JSON.stringify({ fileId }), req.ip],
-        (err) => {
-            if (err) {
-                console.error('Failed to log view:', err);
-                return res.status(500).json({ error: 'Failed to log view' });
-            }
-            res.json({ message: 'View logged' });
-        }
-    );
+    const { tool, fileName } = req.body;
+    logUserActivity(req.user.id, 'view', req.ip, { tool, file_name: fileName });
+    res.json({ message: 'View logged' });
 });
 
 app.post('/api/activity/download', authenticateToken, (req, res) => {
-    const { tool, fileName, fileId, format, pageCount } = req.body;
-    pool.query(
-        `INSERT INTO user_activity (user_id, action, tool_used, file_name, details, ip_address)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [req.user.id, 'download', tool, fileName, JSON.stringify({ fileId, format, pages: pageCount }), req.ip],
-        (err) => {
-            if (err) {
-                console.error('Failed to log download:', err);
-                return res.status(500).json({ error: 'Failed to log download' });
-            }
-            res.json({ message: 'Download logged' });
-        }
-    );
-});
-
-// ==================== GET DATA ROUTES ====================
-app.get('/api/files', authenticateToken, (req, res) => {
-    pool.query(
-        `SELECT id, file_uuid, original_name, file_size, mime_type, created_at
-         FROM user_files WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`,
-        [req.user.id],
-        (err, results) => {
-            if (err) {
-                console.error('Error fetching files:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            res.json({ files: results });
-        }
-    );
-});
-
-app.get('/api/activity', authenticateToken, (req, res) => {
-    const { limit = 20, offset = 0 } = req.query;
-    pool.query(
-        `SELECT action, tool_used, file_name, file_size, details, ip_address, created_at
-         FROM user_activity WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-        [req.user.id, parseInt(limit), parseInt(offset)],
-        (err, results) => {
-            if (err) {
-                console.error('Error fetching activity:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            pool.query(
-                'SELECT COUNT(*) as total FROM user_activity WHERE user_id = ?',
-                [req.user.id],
-                (err, countResult) => {
-                    if (err) return res.status(500).json({ error: 'Database error' });
-                    res.json({
-                        activities: results,
-                        total: countResult[0].total,
-                        limit: parseInt(limit),
-                        offset: parseInt(offset)
-                    });
-                }
-            );
-        }
-    );
-});
-
-app.get('/api/sessions', authenticateToken, (req, res) => {
-    pool.query(
-        `SELECT id, ip_address, created_at, expires_at
-         FROM user_sessions WHERE user_id = ? AND expires_at > NOW() ORDER BY created_at DESC`,
-        [req.user.id],
-        (err, results) => {
-            if (err) {
-                console.error('Error fetching sessions:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            res.json({ sessions: results });
-        }
-    );
-});
-
-app.get('/api/stats', authenticateToken, (req, res) => {
-    const userId = req.user.id;
-    const today = new Date().toISOString().split('T')[0];
-    pool.query(
-        `SELECT 
-            (SELECT COUNT(*) FROM user_activity WHERE user_id = ?) as total_activities,
-            (SELECT COUNT(*) FROM user_files WHERE user_id = ?) as total_files,
-            (SELECT COALESCE(SUM(file_size), 0) FROM user_files WHERE user_id = ?) as total_storage,
-            (SELECT COUNT(*) FROM user_activity WHERE user_id = ? AND DATE(created_at) = ?) as today_activities,
-            (SELECT COUNT(DISTINCT tool_used) FROM user_activity WHERE user_id = ?) as tools_used,
-            (SELECT COUNT(*) FROM user_sessions WHERE user_id = ? AND expires_at > NOW()) as active_sessions`,
-        [userId, userId, userId, userId, today, userId, userId],
-        (err, results) => {
-            if (err) {
-                console.error('Stats error:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            res.json({ stats: results[0] });
-        }
-    );
-});
-
-app.get('/api/auth/me', authenticateToken, (req, res) => {
-    pool.query(
-        'SELECT id, name, email, is_premium, created_at, last_login FROM users WHERE id = ?',
-        [req.user.id],
-        (err, results) => {
-            if (err || results.length === 0) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-            const user = results[0];
-            res.json({
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    is_premium: user.is_premium === 1 ? true : false,
-                    created_at: user.created_at,
-                    last_login: user.last_login
-                }
-            });
-        }
-    );
+    const { tool, fileName, format, pageCount } = req.body;
+    logUserActivity(req.user.id, 'download', req.ip, { tool, file_name: fileName, format, pages: pageCount });
+    res.json({ message: 'Download logged' });
 });
 
 // ==================== ADMIN ROUTES ====================
 app.get('/api/admin/activity', requireAdmin, (req, res) => {
     const { type, email, tool, limit = 200, offset = 0 } = req.query;
-
     let entries = logger.getAll();
     if (type)  entries = entries.filter(e => e.type  === type);
     if (email) entries = entries.filter(e => e.email === email);
     if (tool)  entries = entries.filter(e => e.tool  === tool);
-
     const total = entries.length;
-    const paginated = entries.slice(parseInt(offset), parseInt(offset) + parseInt(limit));
-    res.json({ total, entries: paginated });
+    res.json({ total, entries: entries.slice(parseInt(offset), parseInt(offset) + parseInt(limit)) });
 });
 
 app.get('/api/admin/stats', requireAdmin, (req, res) => {
     const all = logger.getAll();
-    const stats = {
+    res.json({
         total:        all.length,
         logins:       all.filter(e => e.type === 'login').length,
         tool_uses:    all.filter(e => e.type === 'tool_use').length,
         downloads:    all.filter(e => e.type === 'download').length,
         users:        [...new Set(all.map(e => e.email).filter(Boolean))].length,
-        tools:        all.reduce((acc, e) => {
-            if (e.tool) acc[e.tool] = (acc[e.tool] || 0) + 1;
-            return acc;
-        }, {}),
-        recent_users: [...new Set(all.slice(0, 50).map(e => e.email).filter(Boolean))].slice(0, 10),
-    };
-    res.json(stats);
+        tools:        all.reduce((acc, e) => { if (e.tool) acc[e.tool] = (acc[e.tool]||0)+1; return acc; }, {}),
+        recent_users: [...new Set(all.slice(0,50).map(e => e.email).filter(Boolean))].slice(0,10),
+    });
+});
+
+app.get('/api/admin/users', requireAdmin, (req, res) => {
+    const users = readDB().users.map(u => ({
+        id: u.id, name: u.name, email: u.email,
+        is_premium: u.is_premium, created_at: u.created_at, last_login: u.last_login
+    }));
+    res.json({ users, total: users.length });
 });
 
 app.delete('/api/admin/activity', requireAdmin, (req, res) => {
@@ -627,20 +388,8 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ==================== CHECK TOKEN VALIDITY ====================
 app.get('/api/check-token', authenticateToken, (req, res) => {
     res.json({ valid: true, user: req.user });
-});
-
-// ==================== TEST ENDPOINT ====================
-app.post('/api/test-upload', authenticateToken, (req, res) => {
-    console.log('🧪 TEST ENDPOINT HIT');
-    res.json({
-        message: 'Test successful',
-        receivedBody: req.body,
-        hasPassword: !!req.body.password,
-        hasFiles: !!req.files
-    });
 });
 
 // ==================== START SERVER ====================
@@ -651,5 +400,5 @@ app.listen(PORT, () => {
     console.log(`📁 Admin:   http://localhost:${PORT}/admin.html`);
     console.log(`📁 Health:  http://localhost:${PORT}/api/health`);
     console.log(`📁 Uploads: ${uploadDir}`);
-    console.log(`\n✅ Activity logging enabled!`);
+    console.log(`\n✅ JSON file database — no MySQL needed!`);
 });
