@@ -1,5 +1,5 @@
 const { OAuth2Client } = require('google-auth-library');
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(896089467724-crir8t378v8kd0qm39pj5d6rlsb77qcl.apps.googleusercontent.com);
 const logger   = require('./activity-logger');
 const express  = require('express');
 const bodyParser = require('body-parser');
@@ -96,6 +96,12 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+// Add this after your cors setup
+app.use((req, res, next) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    next();
+});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -278,7 +284,8 @@ app.post('/api/auth/google', async (req, res) => {
         // Verify Google token
         const ticket = await googleClient.verifyIdToken({
             idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID
+            audience: 896089467724-crir8t378v8kd0qm39pj5d6rlsb77qcl.apps.googleusercontent.com
+
         });
 
         const payload = ticket.getPayload();
