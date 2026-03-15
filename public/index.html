@@ -7047,7 +7047,7 @@ async function protectPDF(tool) {
             }
         }
 
-        const response = await fetch('http://localhost:3009/api/protect-pdf', {
+        const response = await fetch('${API}/api/protect-pdf', {
             method: 'POST',
             headers: {},
             body: formData
@@ -7125,7 +7125,7 @@ async function testUpload(tool = 'protect') {
         console.log('  ', key, value);
     }
 
-    const response = await fetch('http://localhost:3009/api/test-upload', {
+    const response = await fetch('${API}/api/test-upload', {
         method: 'POST',
         headers: {},
         body: formData
@@ -7156,7 +7156,7 @@ async function unprotectPDF(tool) {
         formData.append('file', fileObj, fileObj.name);
         formData.append('password', password);
 
-        const response = await fetch('http://localhost:3009/api/unprotect-pdf', {
+        const response = await fetch('${API}/api/unprotect-pdf', {
             method: 'POST',
             headers: {},
             body: formData
@@ -7263,7 +7263,7 @@ async function encryptPDF(tool) {
         formData.append('file', fileObj, fileObj.name);
         formData.append('password', password);
 
-        const response = await fetch('http://localhost:3009/api/protect-pdf', {
+        const response = await fetch('${API}/api/protect-pdf', {
             method: 'POST',
             headers: {},
             body: formData
@@ -14522,7 +14522,7 @@ document.addEventListener('change', function(e) {
         // <!-- BACKEND INTEGRATION - PREMIUM ONLY FOR LOGGED-IN USERS -->
 
     // ==================== BACKEND INTEGRATION ====================
-    const API_BASE_URL = 'http://localhost:3009/api';
+    const API_BASE_URL = '${API}/api';
     
     (function() {
         console.log('🔌 Connecting to backend at:', API_BASE_URL);
@@ -14899,7 +14899,7 @@ function logToolActivity(tool) {
     const filename = fileObj?.name || '';
     const filesize = fileObj?.size || 0;
 
-    fetch('http://localhost:3009/api/log-tool', {
+    fetch('${API}/api/log-tool', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
