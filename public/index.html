@@ -3351,6 +3351,9 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
+        const API = window.location.hostname === 'localhost'
+    ? 'http://localhost:3009'
+    : 'https://working-pdf.onrender.com';
 
   
         const { PDFDocument, degrees, rgb, StandardFonts } = PDFLib;
