@@ -1,13 +1,21 @@
 require('dotenv').config(); // MUST BE FIRST LINE
+// Debug - check env variables
+console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
+console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ NOT SET');
 
 const nodemailer = require('nodemailer');
 
 // Email transporter
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
+    },
+    tls: {
+        rejectUnauthorized: false
     }
 });
 
@@ -426,6 +434,8 @@ app.post('/api/auth/google', async (req, res) => {
 
 // ==================== SEND OTP ====================
 app.post('/api/auth/send-otp', async (req, res) => {
+     // Add timeout
+     res.setTimeout(30000);
     try {
         const { email, type } = req.body;
 
@@ -526,8 +536,16 @@ app.post('/api/auth/send-otp', async (req, res) => {
         res.json({ success: true, message: 'OTP sent to your email' });
 
     } catch (error) {
-        console.error('Send OTP error:', error);
-        res.status(500).json({ error: 'Failed to send OTP. Please try again.' });
+        console.error('Send OTP error details:', {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+            EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
+            EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'NOT SET'
+        });
+        res.status(500).json({ 
+            error: 'Failed to send OTP: ' + error.message
+        });
     }
 });
 
