@@ -24,6 +24,7 @@ const transporter = nodemailer.createTransport({
     greetingTimeout: 30000,
     socketTimeout: 60000
 });
+
 // DEBUG - remove after fixing
 console.log('EMAIL_USER:', process.env.EMAIL_USER);
 console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ NOT SET');
@@ -460,11 +461,8 @@ app.get('/api/test-email', async (req, res) => {
         });
     }
 });
-```
 
-Push and visit:
-```
-https://working-pdf.onrender.com/api/test-email
+
 // ==================== SEND OTP ====================
 app.post('/api/auth/send-otp', async (req, res) => {
     try {
