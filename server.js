@@ -6,23 +6,14 @@ console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ NOT SET');
 const nodemailer = require('nodemailer');
 
 // Email transporter
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
-    },
-    connectionTimeout: 60000,
-    greetingTimeout: 30000,
-    socketTimeout: 60000,
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100
+transporter.verify(function(error, success) {
+    if (error) {
+        console.log('❌ Email error:', error.message);
+        console.log('EMAIL_USER:', process.env.EMAIL_USER);
+        console.log('EMAIL_PASS length:', process.env.EMAIL_PASS?.length);
+    } else {
+        console.log('✅ Email ready! Using:', process.env.EMAIL_USER);
+    }
 });
 
 // DEBUG - remove after fixing
