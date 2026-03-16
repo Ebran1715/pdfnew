@@ -8,15 +8,21 @@ const nodemailer = require('nodemailer');
 // Email transporter
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
         rejectUnauthorized: false
-    }
+    },
+    connectionTimeout: 60000,
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100
 });
 
 // DEBUG - remove after fixing
@@ -434,8 +440,6 @@ app.post('/api/auth/google', async (req, res) => {
 
 // ==================== SEND OTP ====================
 app.post('/api/auth/send-otp', async (req, res) => {
-     // Add timeout
-     res.setTimeout(30000);
     try {
         const { email, type } = req.body;
 
@@ -464,87 +468,103 @@ app.post('/api/auth/send-otp', async (req, res) => {
         // Generate 6 digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Store OTP with expiry (10 minutes)
+        // Store OTP immediately before sending email
         otpStore[email] = {
             otp: otp,
             type: type,
             createdAt: Date.now(),
-            expiresAt: Date.now() + (10 * 60 * 1000), // 10 minutes
+            expiresAt: Date.now() + (10 * 60 * 1000),
             attempts: 0
         };
 
-        // Send OTP email
-        const mailOptions = {
-            from: `"PDFWorks Pro" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Your OTP Code - PDFWorks Pro',
-            html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-                        .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-                        .header { background: linear-gradient(135deg, #667eea, #764ba2); padding: 40px; text-align: center; color: white; }
-                        .header h1 { margin: 0; font-size: 28px; }
-                        .header p { margin: 10px 0 0; opacity: 0.9; }
-                        .body { padding: 40px; text-align: center; }
-                        .otp-box { background: #f8f9ff; border: 2px dashed #667eea; border-radius: 12px; padding: 30px; margin: 30px 0; }
-                        .otp-code { font-size: 48px; font-weight: 900; color: #667eea; letter-spacing: 12px; }
-                        .otp-label { font-size: 14px; color: #666; margin-top: 10px; }
-                        .timer { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin: 20px 0; color: #856404; font-size: 14px; }
-                        .footer { background: #f8f9ff; padding: 20px; text-align: center; font-size: 12px; color: #999; }
-                        .warning { color: #dc3545; font-size: 13px; margin-top: 20px; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h1>📄 PDFWorks Pro</h1>
-                            <p>${type === 'signup' ? 'Welcome! Verify your email to get started' : 'Here is your login OTP'}</p>
-                        </div>
-                        <div class="body">
-                            <h2 style="color:#333;">Your Verification Code</h2>
-                            <p style="color:#666;">Use this OTP to ${type === 'signup' ? 'create your account' : 'login to your account'}</p>
-                            
-                            <div class="otp-box">
-                                <div class="otp-code">${otp}</div>
-                                <div class="otp-label">One Time Password</div>
-                            </div>
+        console.log(`OTP generated for ${email}: ${otp}`);
 
-                            <div class="timer">
-                                ⏰ This OTP expires in <strong>10 minutes</strong>
-                            </div>
+        // Send OTP email with timeout promise
+        const sendEmailWithTimeout = () => {
+            return new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Email sending timeout'));
+                }, 25000); // 25 second timeout
 
-                            <p class="warning">
-                                ⚠️ Never share this OTP with anyone.<br>
-                                PDFWorks Pro will never ask for your OTP.
-                            </p>
-                        </div>
-                        <div class="footer">
-                            <p>© 2024 PDFWorks Pro • If you did not request this, please ignore this email.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `
+                const mailOptions = {
+                    from: `"PDFWorks Pro" <${process.env.EMAIL_USER}>`,
+                    to: email,
+                    subject: 'Your OTP Code - PDFWorks Pro',
+                    html: `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <style>
+                                body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+                                .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 16px; overflow: hidden; }
+                                .header { background: linear-gradient(135deg, #667eea, #764ba2); padding: 40px; text-align: center; color: white; }
+                                .header h1 { margin: 0; font-size: 28px; }
+                                .body { padding: 40px; text-align: center; }
+                                .otp-box { background: #f8f9ff; border: 2px dashed #667eea; border-radius: 12px; padding: 30px; margin: 30px 0; }
+                                .otp-code { font-size: 48px; font-weight: 900; color: #667eea; letter-spacing: 12px; }
+                                .footer { background: #f8f9ff; padding: 20px; text-align: center; font-size: 12px; color: #999; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <div class="header">
+                                    <h1>📄 PDFWorks Pro</h1>
+                                    <p>${type === 'signup' ? 'Welcome! Verify your email' : 'Login OTP'}</p>
+                                </div>
+                                <div class="body">
+                                    <h2 style="color:#333;">Your Verification Code</h2>
+                                    <div class="otp-box">
+                                        <div class="otp-code">${otp}</div>
+                                        <p style="color:#666;margin-top:10px;">One Time Password</p>
+                                    </div>
+                                    <p style="color:#856404;background:#fff3cd;padding:12px;border-radius:8px;">
+                                        ⏰ Expires in <strong>10 minutes</strong>
+                                    </p>
+                                    <p style="color:#dc3545;font-size:13px;">
+                                        ⚠️ Never share this OTP with anyone.
+                                    </p>
+                                </div>
+                                <div class="footer">
+                                    <p>© 2024 PDFWorks Pro</p>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                    `
+                };
+
+                transporter.sendMail(mailOptions, (error, info) => {
+                    clearTimeout(timeout);
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(info);
+                    }
+                });
+            });
         };
 
-        await transporter.sendMail(mailOptions);
+        await sendEmailWithTimeout();
 
-        console.log(`OTP sent to ${email}: ${otp}`);
+        console.log(`✅ OTP sent successfully to ${email}`);
         res.json({ success: true, message: 'OTP sent to your email' });
 
     } catch (error) {
-        console.error('Send OTP error details:', {
-            message: error.message,
-            code: error.code,
-            command: error.command,
-            EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
-            EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'NOT SET'
-        });
+        console.error('Send OTP error:', error.message);
+
+        // OTP is already stored so user can still verify
+        // even if email fails - for testing purposes
+        if (process.env.NODE_ENV === 'development') {
+            console.log('DEV MODE - OTP stored but email failed');
+            return res.json({ 
+                success: true, 
+                message: 'OTP generated (check server console for OTP in dev mode)',
+                dev_otp: otpStore[req.body.email]?.otp 
+            });
+        }
+
         res.status(500).json({ 
-            error: 'Failed to send OTP: ' + error.message
+            error: 'Failed to send OTP email. Please check your email address and try again.' 
         });
     }
 });
