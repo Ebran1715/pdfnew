@@ -3490,45 +3490,52 @@ body.dark-mode .category-title {
                 <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
                 <div class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</div>
             </div>
-            <div id="loginForm" class="auth-form active">
-                <!-- Google Sign In Button -->
-                <div id="g_id_onload"
-                     data-client_id="896089467724-crir8t378v8kd0qm39pj5d6rlsb77qcl.apps.googleusercontent.com"
-                     data-callback="handleGoogleLogin"
-                     data-auto_prompt="false">
-                </div>
-                <div class="google-btn-container">
-                    <div class="g_id_signin"
-                         data-type="standard"
-                         data-size="large"
-                         data-theme="outline"
-                         data-text="sign_in_with"
-                         data-shape="rectangular"
-                         data-logo_alignment="left"
-                         data-width="100%">
-                    </div>
-                </div>
-            
-                <!-- OR Divider -->
-                <div class="auth-divider">
-                    <span>or login with email</span>
-                </div>
-            
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="loginEmail" placeholder="Enter your email">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="loginPassword" placeholder="Enter your password">
-                </div>
-                <button class="auth-btn" onclick="handleLogin()">Login</button>
-                <div class="auth-footer">
-                    <a onclick="switchAuthTab('signup')">Don't have an account? Sign up</a>
-                </div>
-            </div>
+    
+            <!-- LOGIN FORM -->
+          <!-- LOGIN FORM -->
+<div id="loginForm" class="auth-form active">
+    <!-- Google Button -->
+    <div id="g_id_onload"
+         data-client_id="896089467724-crir8t378v8kd0qm39pj5d6rlsb77qcl.apps.googleusercontent.com"
+         data-callback="handleGoogleLogin"
+         data-auto_prompt="false">
+    </div>
+    <div class="google-btn-container">
+        <div class="g_id_signin"
+             data-type="standard"
+             data-size="large"
+             data-theme="outline"
+             data-text="sign_in_with"
+             data-shape="rectangular"
+             data-logo_alignment="left"
+             data-width="370">
+        </div>
+    </div>
+    <div class="auth-divider"><span>or login with email</span></div>
+
+    <!-- Email + Password only -->
+    <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="Enter your email">
+        <small id="loginEmailError" style="color:var(--danger);display:none;margin-top:5px;"></small>
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password">
+        <small id="loginPasswordError" style="color:var(--danger);display:none;margin-top:5px;"></small>
+    </div>
+    <button class="auth-btn" onclick="handleEmailLogin()">
+        <i class="fas fa-sign-in-alt"></i> Login
+    </button>
+
+    <div class="auth-footer">
+        <a onclick="switchAuthTab('signup')">Don't have an account? Sign up</a>
+    </div>
+</div>
+    
+            <!-- SIGNUP FORM -->
             <div id="signupForm" class="auth-form">
-                <!-- Google Sign Up Button -->
+                <!-- Google Button -->
                 <div class="google-btn-container">
                     <div class="g_id_signin"
                          data-type="standard"
@@ -3540,29 +3547,72 @@ body.dark-mode .category-title {
                          data-width="370">
                     </div>
                 </div>
-            
-                <!-- OR Divider -->
-                <div class="auth-divider">
-                    <span>or sign up with email</span>
+                <div class="auth-divider"><span>or sign up with email</span></div>
+    
+                <!-- Step 1: Details -->
+                <div id="signupStep1">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="signupName" placeholder="Enter your full name">
+                        <small id="signupNameError" style="color:var(--danger);display:none;margin-top:5px;"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="signupEmail" placeholder="Enter your email">
+                        <small id="signupEmailError" style="color:var(--danger);display:none;margin-top:5px;"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="signupPassword" placeholder="Create a password (min 6 chars)">
+                        <small id="signupPasswordError" style="color:var(--danger);display:none;margin-top:5px;"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="signupConfirmPassword" placeholder="Confirm your password">
+                        <small id="signupConfirmError" style="color:var(--danger);display:none;margin-top:5px;"></small>
+                    </div>
+                    <button class="auth-btn" onclick="sendSignupOTP()">
+                        <i class="fas fa-paper-plane"></i> Send OTP to Verify Email
+                    </button>
                 </div>
-            
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="signupName" placeholder="Enter your name">
+    
+                <!-- Step 2: OTP -->
+                <div id="signupStep2" style="display:none;">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <div style="font-size:2rem;">📧</div>
+                        <p style="color:var(--gray-600);font-size:14px;margin-top:8px;">
+                            OTP sent to <strong id="signupEmailDisplay"></strong>
+                        </p>
+                        <p style="color:var(--gray-400);font-size:12px;">Check your inbox and spam folder</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Enter OTP</label>
+                        <input type="text" id="signupOTP" placeholder="Enter 6-digit OTP"
+                               maxlength="6" style="font-size:1.5rem;letter-spacing:8px;text-align:center;">
+                        <small id="signupOTPError" style="color:var(--danger);display:none;margin-top:5px;"></small>
+                    </div>
+                    <!-- OTP Timer -->
+                    <div id="signupTimerDiv" style="text-align:center;margin:10px 0;">
+                        <span style="color:var(--gray-400);font-size:13px;">
+                            Expires in <span id="signupTimer" style="color:var(--danger);font-weight:700;">10:00</span>
+                        </span>
+                    </div>
+                    <button class="auth-btn" onclick="verifySignupOTP()">
+                        <i class="fas fa-user-check"></i> Verify & Create Account
+                    </button>
+                    <div style="text-align:center;margin-top:12px;">
+                        <button onclick="resendOTP('signup')" 
+                                style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:13px;font-weight:600;">
+                            <i class="fas fa-redo"></i> Resend OTP
+                        </button>
+                        <span style="color:var(--gray-300);margin:0 8px;">|</span>
+                        <button onclick="backToEmail('signup')" 
+                                style="background:none;border:none;color:var(--gray-500);cursor:pointer;font-size:13px;">
+                            Change Email
+                        </button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="signupEmail" placeholder="Enter your email">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="signupPassword" placeholder="Create a password">
-                </div>
-                <div class="form-group">
-                    <label>Confirm Password</label>
-                    <input type="password" id="signupConfirmPassword" placeholder="Confirm your password">
-                </div>
-                <button class="auth-btn" onclick="handleSignup()">Create Account</button>
+    
                 <div class="auth-footer">
                     <a onclick="switchAuthTab('login')">Already have an account? Login</a>
                 </div>
@@ -4412,30 +4462,51 @@ function showToast(message, type = 'success', duration = 3000) {
         }
 
         function updateAuthUI() {
-            const authButtons = document.getElementById('authButtons');
-            const userMenu = document.getElementById('userMenu');
-            
-            if (isLoggedIn && currentUser) {
-                authButtons.style.display = 'none';
-                userMenu.style.display = 'block';
-                document.getElementById('userAvatar').textContent = currentUser.avatar;
-                document.getElementById('userName').textContent = currentUser.name;
-                document.getElementById('userEmail').textContent = currentUser.email;
-                
-                // Update dropdown to show premium status
-                const dropdownItems = document.querySelectorAll('.dropdown-item');
-                dropdownItems.forEach(item => {
-                    if (item.innerHTML.includes('Upgrade to Premium')) {
-                        if (isPremium) {
-                            item.innerHTML = '<i class="fas fa-crown" style="color: #f59e0b;"></i><span>Premium Member</span>';
-                        }
-                    }
-                });
+    const user = window.currentUser || JSON.parse(localStorage.getItem('user') || '{}');
+    const authButtons = document.getElementById('authButtons');
+    const userMenu = document.getElementById('userMenu');
+    const userAvatar = document.getElementById('userAvatar');
+    const userName = document.getElementById('userName');
+    const userEmail = document.getElementById('userEmail');
+
+    if (window.isLoggedIn && user && user.email) {
+        // Hide auth buttons show user menu
+        if (authButtons) authButtons.style.display = 'none';
+        if (userMenu) userMenu.style.display = 'block';
+
+        // Set avatar — show picture if Google, initials if email
+        if (userAvatar) {
+            if (user.picture) {
+                userAvatar.innerHTML = `<img src="${user.picture}" 
+                    style="width:100%;height:100%;border-radius:50%;object-fit:cover;"
+                    onerror="this.parentElement.textContent='${user.name?.substring(0,2).toUpperCase() || 'U'}'">`;
             } else {
-                authButtons.style.display = 'flex';
-                userMenu.style.display = 'none';
+                // Show initials
+                const initials = user.name
+                    ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                    : user.email.substring(0, 2).toUpperCase();
+                userAvatar.textContent = initials;
             }
         }
+
+        // Set name and email in dropdown
+        if (userName) userName.textContent = user.name || user.email;
+        if (userEmail) userEmail.textContent = user.email;
+
+        // Update premium status
+        const dropdownItems = document.querySelectorAll('.dropdown-item');
+        dropdownItems.forEach(item => {
+            if (item.innerHTML.includes('Upgrade to Premium')) {
+                item.innerHTML = '<i class="fas fa-crown" style="color:#f59e0b;"></i><span>Premium Member</span>';
+            }
+        });
+
+    } else {
+        // Show auth buttons hide user menu
+        if (authButtons) authButtons.style.display = 'flex';
+        if (userMenu) userMenu.style.display = 'none';
+    }
+}
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -15560,22 +15631,19 @@ window.handleLogout = async function() {
         const storedToken = localStorage.getItem('authToken');
         
         if (storedUser && storedToken) {
-            try {
-                const user = JSON.parse(storedUser);
-                window.currentUser = user;
-                window.isLoggedIn = true;
-                
-                // Update dashboard with stored user data
-                updateUserDashboard(user);
-                updatePremiumUI(true);
-                
-                console.log('✅ User restored:', user.name);
-            } catch (e) {
-                console.error('Failed to restore user');
-                localStorage.removeItem('user');
-                localStorage.removeItem('authToken');
-                updatePremiumUI(false);
-            }
+    try {
+        const user = JSON.parse(storedUser);
+        window.currentUser = user;
+        window.isLoggedIn = true;
+        isPremium = true;
+        updateAuthUI();
+        console.log('✅ User restored:', user.name);
+    } catch (e) {
+        console.error('Failed to restore user');
+        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
+    }
+
         } else {
             // No user logged in, show premium as locked
             updatePremiumUI(false);
@@ -16226,6 +16294,493 @@ document.addEventListener('click', function(e) {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeProfileModal();
 });
+
+
+// ==================== OTP AUTH SYSTEM ====================
+let otpTimers = {};
+let pendingSignup = {};
+
+// ── EMAIL VALIDATION ──
+function isValidEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+}
+
+// ── START OTP TIMER ──
+function startOTPTimer(type) {
+    let seconds = 600; // 10 minutes
+    const timerId = type + 'Timer';
+    
+    if (otpTimers[type]) clearInterval(otpTimers[type]);
+    
+    otpTimers[type] = setInterval(() => {
+        seconds--;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        const el = document.getElementById(timerId);
+        if (el) {
+            el.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            if (seconds <= 60) el.style.color = 'var(--danger)';
+        }
+        
+        if (seconds <= 0) {
+            clearInterval(otpTimers[type]);
+            if (el) el.textContent = 'Expired';
+            showToast('OTP expired. Please request a new one.', 'warning');
+        }
+    }, 1000);
+}
+
+// ── LOGIN: SEND OTP ──
+async function sendLoginOTP() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const errorEl = document.getElementById('loginEmailError');
+    
+    // Validate email
+    errorEl.style.display = 'none';
+    if (!email) {
+        errorEl.textContent = 'Please enter your email address';
+        errorEl.style.display = 'block';
+        return;
+    }
+    if (!isValidEmail(email)) {
+        errorEl.textContent = 'Please enter a valid email address';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending OTP...';
+
+    try {
+        const res = await fetch(`${API}/api/auth/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, type: 'login' })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            errorEl.textContent = data.error || 'Failed to send OTP';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+            return;
+        }
+
+        // Show OTP step
+        document.getElementById('loginStep1').style.display = 'none';
+        document.getElementById('loginStep2').style.display = 'block';
+        document.getElementById('loginEmailDisplay').textContent = email;
+        document.getElementById('loginOTP').focus();
+
+        // Start timer
+        startOTPTimer('login');
+
+        showToast(`OTP sent to ${email}!`, 'success');
+
+    } catch (error) {
+        errorEl.textContent = 'Network error. Please try again.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+    }
+}
+
+// ── LOGIN: VERIFY OTP ──
+async function verifyLoginOTP() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const otp = document.getElementById('loginOTP').value.trim();
+    const errorEl = document.getElementById('loginOTPError');
+
+    errorEl.style.display = 'none';
+
+    if (!otp || otp.length !== 6) {
+        errorEl.textContent = 'Please enter the 6-digit OTP';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+    try {
+        const res = await fetch(`${API}/api/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp, type: 'login' })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            errorEl.textContent = data.error || 'Invalid OTP';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check"></i> Verify & Login';
+            return;
+        }
+
+        // Clear timer
+        if (otpTimers['login']) clearInterval(otpTimers['login']);
+
+        // Save to localStorage
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Update app state
+window.isLoggedIn = true;
+window.currentUser = data.user;
+isPremium = true;
+
+// Save to localStorage
+localStorage.setItem('authToken', data.token);
+localStorage.setItem('user', JSON.stringify(data.user));
+
+// Update UI
+updateAuthUI();
+
+        // Log login
+        fetch(`${API}/api/log-tool`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tool: 'login',
+                email: data.user.email,
+                type: 'login',
+                filename: '',
+                filesize: 0
+            })
+        }).catch(() => {});
+
+        closeAuthModal();
+        showToast(`Welcome back, ${data.user.name}!`, 'success');
+
+        // Reset form
+        document.getElementById('loginStep1').style.display = 'block';
+        document.getElementById('loginStep2').style.display = 'none';
+        document.getElementById('loginOTP').value = '';
+
+    } catch (error) {
+        errorEl.textContent = 'Network error. Please try again.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check"></i> Verify & Login';
+    }
+}
+
+// ── SIGNUP: SEND OTP ──
+async function sendSignupOTP() {
+    const name = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const confirm = document.getElementById('signupConfirmPassword').value;
+
+    // Reset errors
+    ['signupNameError', 'signupEmailError', 'signupPasswordError', 'signupConfirmError']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+    // Validate
+    let hasError = false;
+
+    if (!name || name.length < 2) {
+        document.getElementById('signupNameError').textContent = 'Please enter your full name';
+        document.getElementById('signupNameError').style.display = 'block';
+        hasError = true;
+    }
+
+    if (!email || !isValidEmail(email)) {
+        document.getElementById('signupEmailError').textContent = 'Please enter a valid email address';
+        document.getElementById('signupEmailError').style.display = 'block';
+        hasError = true;
+    }
+
+    if (!password || password.length < 6) {
+        document.getElementById('signupPasswordError').textContent = 'Password must be at least 6 characters';
+        document.getElementById('signupPasswordError').style.display = 'block';
+        hasError = true;
+    }
+
+    if (password !== confirm) {
+        document.getElementById('signupConfirmError').textContent = 'Passwords do not match';
+        document.getElementById('signupConfirmError').style.display = 'block';
+        hasError = true;
+    }
+
+    if (hasError) return;
+
+    // Save pending signup data
+    pendingSignup = { name, email, password };
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending OTP...';
+
+    try {
+        const res = await fetch(`${API}/api/auth/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, type: 'signup' })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            document.getElementById('signupEmailError').textContent = data.error || 'Failed to send OTP';
+            document.getElementById('signupEmailError').style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP to Verify Email';
+            return;
+        }
+
+        // Show OTP step
+        document.getElementById('signupStep1').style.display = 'none';
+        document.getElementById('signupStep2').style.display = 'block';
+        document.getElementById('signupEmailDisplay').textContent = email;
+        document.getElementById('signupOTP').focus();
+
+        // Start timer
+        startOTPTimer('signup');
+
+        showToast(`OTP sent to ${email}!`, 'success');
+
+    } catch (error) {
+        document.getElementById('signupEmailError').textContent = 'Network error. Please try again.';
+        document.getElementById('signupEmailError').style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP to Verify Email';
+    }
+}
+
+// ── SIGNUP: VERIFY OTP ──
+async function verifySignupOTP() {
+    const otp = document.getElementById('signupOTP').value.trim();
+    const errorEl = document.getElementById('signupOTPError');
+
+    errorEl.style.display = 'none';
+
+    if (!otp || otp.length !== 6) {
+        errorEl.textContent = 'Please enter the 6-digit OTP';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+
+    try {
+        const res = await fetch(`${API}/api/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: pendingSignup.email,
+                otp: otp,
+                name: pendingSignup.name,
+                password: pendingSignup.password,
+                type: 'signup'
+            })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            errorEl.textContent = data.error || 'Invalid OTP';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-check"></i> Verify & Create Account';
+            return;
+        }
+
+        // Clear timer
+        if (otpTimers['signup']) clearInterval(otpTimers['signup']);
+
+        // Save to localStorage
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Update app state
+        window.isLoggedIn = true;
+        window.currentUser = data.user;
+        isPremium = true;
+
+        // Update UI
+        updateAuthUI();
+
+        // Log signup
+        fetch(`${API}/api/log-tool`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tool: 'signup',
+                email: data.user.email,
+                type: 'signup',
+                filename: '',
+                filesize: 0
+            })
+        }).catch(() => {});
+
+        closeAuthModal();
+        showToast(`Welcome to PDFWorks Pro, ${data.user.name}!`, 'success');
+
+        // Reset forms
+        document.getElementById('signupStep1').style.display = 'block';
+        document.getElementById('signupStep2').style.display = 'none';
+        document.getElementById('signupOTP').value = '';
+        pendingSignup = {};
+
+    } catch (error) {
+        errorEl.textContent = 'Network error. Please try again.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-user-check"></i> Verify & Create Account';
+    }
+}
+
+// ── RESEND OTP ──
+async function resendOTP(type) {
+    const email = type === 'login'
+        ? document.getElementById('loginEmail').value.trim()
+        : pendingSignup.email;
+
+    try {
+        const res = await fetch(`${API}/api/auth/resend-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, type })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // Reset timer
+            const timerEl = document.getElementById(type + 'Timer');
+            if (timerEl) timerEl.textContent = '10:00';
+            startOTPTimer(type);
+            showToast('New OTP sent to your email!', 'success');
+        } else {
+            showToast(data.error || 'Failed to resend OTP', 'error');
+        }
+    } catch (error) {
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
+// ── BACK TO EMAIL ──
+function backToEmail(type) {
+    if (otpTimers[type]) clearInterval(otpTimers[type]);
+
+    if (type === 'login') {
+        document.getElementById('loginStep1').style.display = 'block';
+        document.getElementById('loginStep2').style.display = 'none';
+        document.getElementById('loginOTP').value = '';
+    } else {
+        document.getElementById('signupStep1').style.display = 'block';
+        document.getElementById('signupStep2').style.display = 'none';
+        document.getElementById('signupOTP').value = '';
+    }
+}
+
+// ==================== EMAIL + PASSWORD LOGIN ====================
+async function handleEmailLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const emailError = document.getElementById('loginEmailError');
+    const passwordError = document.getElementById('loginPasswordError');
+
+    // Reset errors
+    emailError.style.display = 'none';
+    passwordError.style.display = 'none';
+
+    // Validate
+    let hasError = false;
+
+    if (!email || !isValidEmail(email)) {
+        emailError.textContent = 'Please enter a valid email address';
+        emailError.style.display = 'block';
+        hasError = true;
+    }
+
+    if (!password) {
+        passwordError.textContent = 'Please enter your password';
+        passwordError.style.display = 'block';
+        hasError = true;
+    }
+
+    if (hasError) return;
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+
+    try {
+        const res = await fetch(`${API}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            // Show error under correct field
+            if (data.error?.toLowerCase().includes('email') || 
+                data.error?.toLowerCase().includes('found')) {
+                emailError.textContent = data.error;
+                emailError.style.display = 'block';
+            } else if (data.error?.toLowerCase().includes('password')) {
+                passwordError.textContent = data.error;
+                passwordError.style.display = 'block';
+            } else {
+                emailError.textContent = data.error || 'Login failed';
+                emailError.style.display = 'block';
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+            return;
+        }
+
+        // Save to localStorage
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Update app state
+        window.isLoggedIn = true;
+        window.currentUser = data.user;
+        isPremium = true;
+
+        // Update UI
+        updateAuthUI();
+
+        // Log login activity
+        fetch(`${API}/api/log-tool`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tool: 'login',
+                email: data.user.email,
+                type: 'login',
+                filename: '',
+                filesize: 0
+            })
+        }).catch(() => {});
+
+        closeAuthModal();
+        showToast(`Welcome back, ${data.user.name}!`, 'success');
+
+    } catch (error) {
+        emailError.textContent = 'Network error. Please try again.';
+        emailError.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+    }
+}
 </script>
 <!-- Profile Modal -->
 <div id="profileModal" class="profile-modal">
