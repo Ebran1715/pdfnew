@@ -8,23 +8,22 @@ const nodemailer = require('nodemailer');
 // Email transporter
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
     },
+    debug: true,
+    logger: true,
     connectionTimeout: 60000,
     greetingTimeout: 30000,
-    socketTimeout: 60000,
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100
+    socketTimeout: 60000
 });
-
 // DEBUG - remove after fixing
 console.log('EMAIL_USER:', process.env.EMAIL_USER);
 console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ NOT SET');
@@ -438,6 +437,34 @@ app.post('/api/auth/google', async (req, res) => {
     }
 });
 
+
+app.get('/api/test-email', async (req, res) => {
+    try {
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: process.env.EMAIL_USER,
+            subject: 'Test Email from PDFWorks',
+            text: 'Email is working!'
+        });
+        res.json({ 
+            success: true, 
+            message: 'Test email sent!',
+            from: process.env.EMAIL_USER
+        });
+    } catch(error) {
+        res.json({ 
+            success: false, 
+            error: error.message,
+            user: process.env.EMAIL_USER,
+            passSet: !!process.env.EMAIL_PASS
+        });
+    }
+});
+```
+
+Push and visit:
+```
+https://working-pdf.onrender.com/api/test-email
 // ==================== SEND OTP ====================
 app.post('/api/auth/send-otp', async (req, res) => {
     try {
@@ -800,6 +827,8 @@ app.post('/api/unprotect-pdf', upload.single('file'), async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+
 
 // ==================== LOG ALL TOOLS ====================
 app.post('/api/log-tool', (req, res) => {
