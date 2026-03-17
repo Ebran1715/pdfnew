@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@pdfsmaller/pdf-encrypt-lite": "^1.0.1",
+    "@sendgrid/mail": "^8.1.6",
     "archiver": "^7.0.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",

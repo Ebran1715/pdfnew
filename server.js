@@ -1,7 +1,29 @@
 require('dotenv').config();
-// Debug
-console.log('EMAIL_USER value:', JSON.stringify(process.env.EMAIL_USER));
-console.log('EMAIL_PASS set:', !!process.env.EMAIL_PASS);
+
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+async function sendEmail(to, subject, html) {
+    try {
+        console.log('📧 Sending email to:', to);
+        await sgMail.send({
+            to: to,
+            from: {
+                email: process.env.EMAIL_USER,
+                name: 'PDFWorks Pro'
+            },
+            subject: subject,
+            html: html
+        });
+        console.log('✅ Email sent to:', to);
+    } catch(error) {
+        console.error('❌ Email failed:', error.message);
+        throw error;
+    }
+}
+
+console.log('SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ NOT SET');
+console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
 
 const nodemailer = require('nodemailer');
 
