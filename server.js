@@ -6,7 +6,10 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 async function sendEmail(to, subject, html) {
     try {
         console.log('📧 Sending email to:', to);
-        await sgMail.send({
+        console.log('📧 Using SendGrid API key:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ NOT SET');
+        console.log('📧 From email:', process.env.EMAIL_USER);
+        
+        const msg = {
             to: to,
             from: {
                 email: process.env.EMAIL_USER,
@@ -14,14 +17,27 @@ async function sendEmail(to, subject, html) {
             },
             subject: subject,
             html: html
-        });
-        console.log('✅ Email sent to:', to);
+        };
+        
+        const response = await sgMail.send(msg);
+        console.log('✅ SendGrid response:', response[0]?.statusCode || 'No status code');
+        console.log('✅ Email sent successfully to:', to);
+        return response;
+        
     } catch(error) {
-        console.error('❌ Email failed:', error.message);
-        throw error;
+        console.error('❌ SendGrid email failed:');
+        console.error('❌ Error message:', error.message);
+        
+        // Log detailed error response from SendGrid
+        if (error.response) {
+            console.error('❌ SendGrid API Error Details:');
+            console.error('❌ Status Code:', error.response.statusCode);
+            console.error('❌ Response Body:', error.response.body);
+        }
+        
+        throw new Error(`Failed to send email: ${error.message}`);
     }
 }
-
 console.log('SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ NOT SET');
 console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
 
