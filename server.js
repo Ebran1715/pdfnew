@@ -25,46 +25,6 @@ async function sendEmail(to, subject, html) {
 console.log('SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ NOT SET');
 console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
 
-const nodemailer = require('nodemailer');
-
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
-    }
-});
-
-transporter.verify(function(error, success) {
-    if (error) {
-        console.log('❌ Email error:', error.message);
-    } else {
-        console.log('✅ Email server ready:', process.env.EMAIL_USER);
-    }
-});
-
-async function sendEmail(to, subject, html) {
-    try {
-        console.log('📧 Sending email to:', to);
-        const info = await transporter.sendMail({
-            from: `"PDFWorks Pro" <${process.env.EMAIL_USER}>`,
-            to: to,
-            subject: subject,
-            html: html
-        });
-        console.log('✅ Email sent to:', to);
-        return info;
-    } catch(error) {
-        console.error('❌ Email failed:', error.message);
-        throw error;
-    }
-}
-
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const logger = require('./activity-logger');
@@ -81,7 +41,6 @@ const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const { encryptPDFBuffer, decryptPDFBuffer } = require('./pdf-encryptor');
 
 console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
-console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ NOT SET');
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ NOT SET');
 
 // OTP storage
@@ -792,8 +751,7 @@ app.get('/api/test-email', async (req, res) => {
         res.json({
             success: false,
             error: error.message,
-            email_user: process.env.EMAIL_USER,
-            pass_set: !!process.env.EMAIL_PASS
+            email_user: process.env.EMAIL_USER
         });
     }
 });
@@ -941,4 +899,5 @@ app.listen(PORT, () => {
     console.log(`📁 Health:  http://localhost:${PORT}/api/health`);
     console.log(`📁 Uploads: ${uploadDir}`);
     console.log(`\n✅ JSON file database — no MySQL needed!`);
+    console.log(`✅ SendGrid email configured - OTP emails will work!`);
 });
