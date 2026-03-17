@@ -1,45 +1,85 @@
 require('dotenv').config();
 
-const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const nodemailer = require('nodemailer');
+
+// Create Gmail transporter with IPv4 fix
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    },
+    // Force IPv4 to fix ENETUNREACH error
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+    tls: {
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
+    },
+    // Force IPv4 lookup
+    lookup: (hostname, options, callback) => {
+        require('dns').lookup(hostname, { family: 4 }, callback);
+    }
+});
+
+// Verify connection on startup
+transporter.verify((error, success) => {
+    if (error) {
+        console.log('❌ Gmail connection error:', error.message);
+        console.log('Make sure EMAIL_USER and EMAIL_PASS are correct in .env');
+    } else {
+        console.log('✅ Gmail server is ready to send emails');
+    }
+});
 
 async function sendEmail(to, subject, html) {
     try {
-        console.log('📧 Sending email to:', to);
-        console.log('📧 Using SendGrid API key:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ NOT SET');
-        console.log('📧 From email:', process.env.EMAIL_USER);
+        console.log('📧 Sending email via Gmail to:', to);
         
-        const msg = {
+        const mailOptions = {
+            from: `"PDFWorks Pro" <${process.env.EMAIL_USER}>`,
             to: to,
-            from: {
-                email: process.env.EMAIL_USER,
-                name: 'PDFWorks Pro'
-            },
             subject: subject,
-            html: html
+            html: html,
+            headers: {
+                'X-Priority': '1',
+                'X-MSMail-Priority': 'High'
+            }
         };
         
-        const response = await sgMail.send(msg);
-        console.log('✅ SendGrid response:', response[0]?.statusCode || 'No status code');
-        console.log('✅ Email sent successfully to:', to);
-        return response;
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Email sent successfully, ID:', info.messageId);
+        console.log('📬 Preview URL:', nodemailer.getTestMessageUrl(info));
+        return info;
         
     } catch(error) {
-        console.error('❌ SendGrid email failed:');
-        console.error('❌ Error message:', error.message);
+        console.error('❌ Gmail error:', error.message);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error command:', error.command);
         
-        // Log detailed error response from SendGrid
-        if (error.response) {
-            console.error('❌ SendGrid API Error Details:');
-            console.error('❌ Status Code:', error.response.statusCode);
-            console.error('❌ Response Body:', error.response.body);
+        if (error.code === 'EAUTH') {
+            console.error('❌ Authentication failed - check your app password');
+            console.error('📝 Make sure you are using an App Password, not your regular Gmail password');
+            console.error('🔑 Get app password at: https://myaccount.google.com/apppasswords');
+        }
+        if (error.code === 'ESOCKET') {
+            console.error('❌ Socket error - network issue or IPv6 problem');
+        }
+        if (error.message.includes('ENETUNREACH')) {
+            console.error('❌ IPv6 unreachable - forcing IPv4 should fix this');
         }
         
-        throw new Error(`Failed to send email: ${error.message}`);
+        throw error;
     }
 }
-console.log('SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ NOT SET');
+
 console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
+console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ NOT SET');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ NOT SET');
 
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -55,9 +95,6 @@ const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const { encryptPDFBuffer, decryptPDFBuffer } = require('./pdf-encryptor');
-
-console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
-console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ NOT SET');
 
 // OTP storage
 const otpStore = {};
@@ -753,17 +790,23 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 // ==================== TEST EMAIL ====================
 app.get('/api/test-email', async (req, res) => {
     try {
+        const testEmail = req.query.email || process.env.EMAIL_USER;
+        
         await sendEmail(
-            process.env.EMAIL_USER,
-            'Test Email from PDFWorks',
-            '<p>Email is working! ✅</p>'
+            testEmail,
+            'Test Email from PDFWorks Pro',
+            `<h1>Test Successful!</h1><p>Gmail is working at ${new Date().toLocaleString()}</p>`
         );
+        
         res.json({
             success: true,
-            message: 'Test email sent!',
-            email_user: process.env.EMAIL_USER
+            message: 'Test email sent! Check your inbox',
+            email_user: process.env.EMAIL_USER,
+            to: testEmail
         });
+        
     } catch(error) {
+        console.error('Test email error:', error);
         res.json({
             success: false,
             error: error.message,
@@ -914,6 +957,6 @@ app.listen(PORT, () => {
     console.log(`📁 Admin:   http://localhost:${PORT}/admin.html`);
     console.log(`📁 Health:  http://localhost:${PORT}/api/health`);
     console.log(`📁 Uploads: ${uploadDir}`);
+    console.log(`\n✅ Gmail SMTP configured for ${process.env.EMAIL_USER}`);
     console.log(`\n✅ JSON file database — no MySQL needed!`);
-    console.log(`✅ SendGrid email configured - OTP emails will work!`);
 });
