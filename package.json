@@ -8,6 +8,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "resend": "^3.0.0",
     "@pdfsmaller/pdf-encrypt-lite": "^1.0.1",
     "archiver": "^7.0.1",
     "bcryptjs": "^2.4.3",
@@ -28,7 +29,8 @@
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.17.2",
     "puppeteer": "^24.37.4",
-    "resend": "^6.9.4",
+    
     "uuid": "^9.0.1"
+    
   }
 }
