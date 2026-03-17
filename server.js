@@ -31,6 +31,7 @@ transporter.verify((error, success) => {
     if (error) {
         console.log('❌ Gmail connection error:', error.message);
         console.log('Make sure EMAIL_USER and EMAIL_PASS are correct in .env');
+        console.log('📝 If using 2FA, you need an App Password: https://myaccount.google.com/apppasswords');
     } else {
         console.log('✅ Gmail server is ready to send emails');
     }
@@ -53,7 +54,6 @@ async function sendEmail(to, subject, html) {
         
         const info = await transporter.sendMail(mailOptions);
         console.log('✅ Email sent successfully, ID:', info.messageId);
-        console.log('📬 Preview URL:', nodemailer.getTestMessageUrl(info));
         return info;
         
     } catch(error) {
@@ -63,8 +63,7 @@ async function sendEmail(to, subject, html) {
         
         if (error.code === 'EAUTH') {
             console.error('❌ Authentication failed - check your app password');
-            console.error('📝 Make sure you are using an App Password, not your regular Gmail password');
-            console.error('🔑 Get app password at: https://myaccount.google.com/apppasswords');
+            console.error('📝 Get app password at: https://myaccount.google.com/apppasswords');
         }
         if (error.code === 'ESOCKET') {
             console.error('❌ Socket error - network issue or IPv6 problem');
@@ -173,7 +172,7 @@ console.log('✅ Using JSON file database (no MySQL needed)');
 
 const app = express();
 
-// ==================== CORS ====================
+// ==================== CORS and Headers ====================
 app.use(cors({
     origin: true,
     credentials: true,
@@ -181,14 +180,20 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Fix for Cross-Origin-Opener-Policy
 app.use((req, res, next) => {
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
     res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     next();
 });
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
 // ==================== STATIC FILES ====================
 const publicDir = path.join(__dirname, 'public');
@@ -411,64 +416,68 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
 app.post('/api/auth/google', async (req, res) => {
     try {
         const { token } = req.body;
-        if (!token) return res.status(400).json({ error: 'Token is required' });
+        console.log('🔑 Google login attempt');
+        
+        if (!token) {
+            console.log('❌ No token provided');
+            return res.status(400).json({ error: 'Token is required' });
+        }
 
+        console.log('🔍 Verifying Google token...');
         const ticket = await googleClient.verifyIdToken({
             idToken: token,
             audience: process.env.GOOGLE_CLIENT_ID
         });
 
         const payload = ticket.getPayload();
+        console.log('✅ Google token verified for:', payload.email);
+        
         const { name, email, picture, sub: googleId } = payload;
 
-        if (!email) return res.status(400).json({ error: 'Could not get email from Google' });
+        if (!email) {
+            console.log('❌ No email in Google payload');
+            return res.status(400).json({ error: 'Could not get email from Google' });
+        }
 
         let user = findUser(email);
+        console.log('User found in DB:', user ? 'Yes' : 'No');
 
         if (!user) {
+            // Create new user
             user = {
                 id: Date.now().toString(),
-                name, email, picture, googleId,
+                name: name || email.split('@')[0],
+                email,
+                picture,
+                googleId,
                 provider: 'google',
                 verified: true,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                is_premium: false
             };
             saveUser(user);
-            console.log('New Google user created:', email);
+            console.log('✅ New Google user created:', email);
 
-            // Send welcome email
+            // Send welcome email (don't block if fails)
             try {
                 await sendEmail(
                     email,
                     'Welcome to PDFWorks Pro! 🎉',
-                    `
-                    <div style="font-family:Arial;max-width:600px;margin:0 auto;">
-                        <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px;text-align:center;color:white;border-radius:16px 16px 0 0;">
-                            <h1>📄 PDFWorks Pro</h1>
-                            <p>Welcome aboard! 🎉</p>
-                        </div>
-                        <div style="padding:40px;background:white;border-radius:0 0 16px 16px;">
-                            <h2>Hello, ${name}! 👋</h2>
-                            <p>Your account has been created successfully with Google.</p>
-                            <p>You now have access to all PDF tools!</p>
-                            <a href="https://working-pdf.onrender.com"
-                               style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px 32px;border-radius:30px;text-decoration:none;font-weight:700;margin-top:20px;">
-                                🚀 Start Using PDFWorks Pro
-                            </a>
-                        </div>
-                    </div>
-                    `
+                    `<h1>Welcome!</h1><p>Your account has been created successfully.</p>`
                 );
             } catch(emailError) {
                 console.error('Welcome email failed:', emailError.message);
             }
 
         } else {
+            // Update existing user
             user.picture = picture;
             user.googleId = googleId;
             saveUser(user);
+            console.log('✅ Existing user updated:', email);
         }
 
+        // Create session token
         const sessionToken = Math.random().toString(36).substring(2) +
             Date.now().toString(36) +
             Math.random().toString(36).substring(2);
@@ -501,6 +510,7 @@ app.post('/api/auth/google', async (req, res) => {
             console.error('Activity log error:', e);
         }
 
+        console.log('✅ Google login successful for:', email);
         res.json({
             token: sessionToken,
             user: {
@@ -508,26 +518,71 @@ app.post('/api/auth/google', async (req, res) => {
                 name: user.name,
                 email: user.email,
                 picture: user.picture,
-                provider: 'google'
+                provider: 'google',
+                is_premium: user.is_premium || false
             }
         });
 
     } catch (error) {
-        console.error('Google auth error:', error);
-        res.status(401).json({ error: 'Google authentication failed' });
+        console.error('❌ Google auth error:', error);
+        console.error('Error details:', error.message);
+        res.status(401).json({ error: 'Google authentication failed: ' + error.message });
     }
 });
+
+// Helper function for OTP email HTML
+function generateOTPEmail(otp, type) {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5;">
+        <div style="max-width:600px;margin:40px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+            <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px;text-align:center;color:white;">
+                <h1 style="margin:0;font-size:28px;">📄 PDFWorks Pro</h1>
+                <p style="margin:10px 0 0;opacity:0.9;">
+                    ${type === 'signup' ? 'Welcome! Verify your email to get started' : 'Here is your login OTP'}
+                </p>
+            </div>
+            <div style="padding:40px;text-align:center;">
+                <h2 style="color:#333;">Your Verification Code</h2>
+                <p style="color:#666;">
+                    Use this OTP to ${type === 'signup' ? 'create your account' : 'login to your account'}
+                </p>
+                <div style="background:#f8f9ff;border:2px dashed #667eea;border-radius:12px;padding:30px;margin:30px 0;">
+                    <div style="font-size:48px;font-weight:900;color:#667eea;letter-spacing:12px;">${otp}</div>
+                    <div style="font-size:14px;color:#666;margin-top:10px;">One Time Password</div>
+                </div>
+                <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin:20px 0;color:#856404;font-size:14px;">
+                    ⏰ This OTP expires in <strong>10 minutes</strong>
+                </div>
+                <p style="color:#dc3545;font-size:13px;">
+                    ⚠️ Never share this OTP with anyone.<br>
+                    PDFWorks Pro will never ask for your OTP.
+                </p>
+            </div>
+            <div style="background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#999;">
+                <p>© 2024 PDFWorks Pro • If you did not request this, please ignore this email.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+}
 
 // ==================== SEND OTP ====================
 app.post('/api/auth/send-otp', async (req, res) => {
     try {
         const { email, type } = req.body;
+        
+        console.log('📧 Send OTP request for:', email, 'type:', type);
 
+        // Validate email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.status(400).json({ error: 'Please enter a valid email address' });
         }
 
+        // Check if user exists based on type
         if (type === 'login') {
             const user = findUser(email);
             if (!user) {
@@ -542,8 +597,10 @@ app.post('/api/auth/send-otp', async (req, res) => {
             }
         }
 
+        // Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
+        // Store OTP
         otpStore[email] = {
             otp: otp,
             type: type,
@@ -552,56 +609,27 @@ app.post('/api/auth/send-otp', async (req, res) => {
             attempts: 0
         };
 
-        console.log(`OTP generated for ${email}: ${otp}`);
+        console.log(`✅ OTP generated for ${email}: ${otp}`);
 
-        await sendEmail(
-            email,
-            'Your OTP Code - PDFWorks Pro',
-            `
-            <!DOCTYPE html>
-            <html>
-            <body style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5;">
-                <div style="max-width:600px;margin:40px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.1);">
-                    <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px;text-align:center;color:white;">
-                        <h1 style="margin:0;font-size:28px;">📄 PDFWorks Pro</h1>
-                        <p style="margin:10px 0 0;opacity:0.9;">
-                            ${type === 'signup' ? 'Welcome! Verify your email to get started' : 'Here is your login OTP'}
-                        </p>
-                    </div>
-                    <div style="padding:40px;text-align:center;">
-                        <h2 style="color:#333;">Your Verification Code</h2>
-                        <p style="color:#666;">
-                            Use this OTP to ${type === 'signup' ? 'create your account' : 'login to your account'}
-                        </p>
-                        <div style="background:#f8f9ff;border:2px dashed #667eea;border-radius:12px;padding:30px;margin:30px 0;">
-                            <div style="font-size:48px;font-weight:900;color:#667eea;letter-spacing:12px;">${otp}</div>
-                            <div style="font-size:14px;color:#666;margin-top:10px;">One Time Password</div>
-                        </div>
-                        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;margin:20px 0;color:#856404;font-size:14px;">
-                            ⏰ This OTP expires in <strong>10 minutes</strong>
-                        </div>
-                        <p style="color:#dc3545;font-size:13px;">
-                            ⚠️ Never share this OTP with anyone.<br>
-                            PDFWorks Pro will never ask for your OTP.
-                        </p>
-                    </div>
-                    <div style="background:#f8f9ff;padding:20px;text-align:center;font-size:12px;color:#999;">
-                        <p>© 2024 PDFWorks Pro • If you did not request this, please ignore this email.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            `
-        );
-
-        console.log(`✅ OTP sent successfully to ${email}`);
-        res.json({ success: true, message: 'OTP sent to your email' });
+        // Send email
+        try {
+            await sendEmail(
+                email,
+                'Your OTP Code - PDFWorks Pro',
+                generateOTPEmail(otp, type)
+            );
+            console.log(`✅ Email sent successfully to ${email}`);
+            res.json({ success: true, message: 'OTP sent to your email' });
+        } catch(emailError) {
+            console.error('❌ Email sending failed:', emailError);
+            res.status(500).json({ 
+                error: 'Failed to send OTP email: ' + emailError.message 
+            });
+        }
 
     } catch (error) {
-        console.error('❌ Send OTP error:', error.message);
-        res.status(500).json({
-            error: 'Failed to send OTP: ' + error.message
-        });
+        console.error('❌ Send OTP error:', error);
+        res.status(500).json({ error: 'Server error: ' + error.message });
     }
 });
 
@@ -787,6 +815,122 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     }
 });
 
+// ==================== DEBUG ENDPOINTS ====================
+
+// Debug Google Config
+app.get('/api/debug/google-config', (req, res) => {
+    res.json({
+        clientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Not Set',
+        clientIdPrefix: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.substring(0, 15) + '...' : null,
+        emailUser: process.env.EMAIL_USER ? '✅ Set' : '❌ Not Set',
+        emailPass: process.env.EMAIL_PASS ? '✅ Set' : '❌ Not Set',
+        nodeEnv: process.env.NODE_ENV || 'not set'
+    });
+});
+
+// Debug Email Config
+app.get('/api/debug/email-config', async (req, res) => {
+    try {
+        const testResult = {
+            emailUser: process.env.EMAIL_USER ? '✅ Set' : '❌ Not Set',
+            emailPass: process.env.EMAIL_PASS ? '✅ Set (hidden)' : '❌ Not Set',
+            googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Not Set',
+            transporter: null,
+            otpStore: Object.keys(otpStore).length
+        };
+        
+        // Test transporter if configured
+        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+            try {
+                await transporter.verify();
+                testResult.transporter = '✅ Working';
+            } catch(err) {
+                testResult.transporter = '❌ Failed: ' + err.message;
+            }
+        } else {
+            testResult.transporter = '⚠️ Not configured';
+        }
+        
+        res.json(testResult);
+        
+    } catch(error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug OTP Store
+app.get('/api/debug/otp', (req, res) => {
+    const email = req.query.email;
+    if (email && otpStore[email]) {
+        const data = { ...otpStore[email] };
+        data.otp = '***hidden***';
+        data.exists = true;
+        res.json(data);
+    } else if (email) {
+        res.json({ exists: false, message: 'No OTP found for this email' });
+    } else {
+        res.json({ 
+            totalStored: Object.keys(otpStore).length,
+            emails: Object.keys(otpStore).map(e => e.replace(/(.{3}).*(.{2})/, '$1***$2'))
+        });
+    }
+});
+
+// Debug Database
+app.get('/api/debug/db', (req, res) => {
+    try {
+        const db = readDB();
+        res.json({
+            users: db.users.length,
+            sessions: db.sessions.length,
+            activity: db.activity.length,
+            recentUsers: db.users.slice(-5).map(u => ({
+                email: u.email.replace(/(.{3}).*(.{2})/, '$1***$2'),
+                name: u.name,
+                provider: u.provider || 'email',
+                created: u.createdAt || u.created_at
+            }))
+        });
+    } catch(error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Test Email Send
+app.post('/api/debug/send-test-email', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email required' });
+        }
+        
+        const testOTP = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        await sendEmail(
+            email,
+            'Test Email from PDFWorks Pro',
+            `<h1>Test Email</h1><p>Your test OTP would be: <strong>${testOTP}</strong></p><p>Time: ${new Date().toLocaleString()}</p>`
+        );
+        
+        res.json({ success: true, message: 'Test email sent' });
+        
+    } catch(error) {
+        console.error('Test email error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Clear OTP for email (debug only)
+app.post('/api/debug/clear-otp', (req, res) => {
+    const { email } = req.body;
+    if (email && otpStore[email]) {
+        delete otpStore[email];
+        res.json({ success: true, message: 'OTP cleared' });
+    } else {
+        res.json({ success: false, message: 'No OTP found' });
+    }
+});
+
 // ==================== TEST EMAIL ====================
 app.get('/api/test-email', async (req, res) => {
     try {
@@ -959,4 +1103,10 @@ app.listen(PORT, () => {
     console.log(`📁 Uploads: ${uploadDir}`);
     console.log(`\n✅ Gmail SMTP configured for ${process.env.EMAIL_USER}`);
     console.log(`\n✅ JSON file database — no MySQL needed!`);
+    console.log(`\n🔍 Debug endpoints:`);
+    console.log(`   • /api/debug/google-config`);
+    console.log(`   • /api/debug/email-config`);
+    console.log(`   • /api/debug/otp`);
+    console.log(`   • /api/debug/db`);
+    console.log(`   • /api/test-email`);
 });
