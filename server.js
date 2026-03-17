@@ -1,7 +1,43 @@
 require('dotenv').config();
 
-const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY);
+const nodemailer = require('nodemailer');
+
+// Create transporter with correct settings
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
+});
+
+// Verify connection
+transporter.verify(function(error, success) {
+    if (error) {
+        console.log('❌ Email error:', error.message);
+    } else {
+        console.log('✅ Email server ready:', process.env.EMAIL_USER);
+    }
+});
+
+// Send email function
+async function sendEmail(to, subject, html) {
+    const mailOptions = {
+        from: `"PDFWorks Pro" <${process.env.EMAIL_USER}>`,
+        to: to,
+        subject: subject,
+        html: html
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent to:', to, 'MessageID:', info.messageId);
+    return info;
+}
 
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -18,9 +54,9 @@ const multer   = require('multer');
 const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const { encryptPDFBuffer, decryptPDFBuffer } = require('./pdf-encryptor');
 
-// Debug
-console.log('RESEND_API_KEY:', process.env.RESEND_API_KEY ? '✅ Set' : '❌ NOT SET');
-console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ NOT SET');
+// // Debug
+// console.log('RESEND_API_KEY:', process.env.RESEND_API_KEY ? '✅ Set' : '❌ NOT SET');
+// console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ NOT SET');
 
 // OTP storage
 const otpStore = {};
