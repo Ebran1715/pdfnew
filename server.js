@@ -1,22 +1,21 @@
 require('dotenv').config();
+// Debug
+console.log('EMAIL_USER value:', JSON.stringify(process.env.EMAIL_USER));
+console.log('EMAIL_PASS set:', !!process.env.EMAIL_PASS);
 
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    host: 'ebranhusain777@gmail.com',
-    port: 587,
-    secure: false,
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        rejectUnauthorized: false,
-        ciphers: 'SSLv3'
-    },
-    connectionTimeout: 30000,
-    greetingTimeout: 15000,
-    socketTimeout: 30000
+        rejectUnauthorized: false
+    }
 });
 
 transporter.verify(function(error, success) {
