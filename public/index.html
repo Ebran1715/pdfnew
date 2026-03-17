@@ -16473,6 +16473,7 @@ updateAuthUI();
 }
 
 // ── SIGNUP: SEND OTP ──
+// ── SIGNUP: SEND OTP ──
 async function sendSignupOTP() {
     const name = document.getElementById('signupName').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
@@ -16539,6 +16540,7 @@ async function sendSignupOTP() {
             return;
         }
 
+        // ✅ THIS IS THE PART THAT NEEDS TO BE UPDATED
         // Show OTP step
         document.getElementById('signupStep1').style.display = 'none';
         document.getElementById('signupStep2').style.display = 'block';
