@@ -2,21 +2,23 @@ require('dotenv').config();
 
 const nodemailer = require('nodemailer');
 
-// Create transporter with correct settings
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    host: 'ebranhusain777@gmail.com',
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
     tls: {
-        rejectUnauthorized: false
-    }
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
+    },
+    connectionTimeout: 30000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000
 });
 
-// Verify connection
 transporter.verify(function(error, success) {
     if (error) {
         console.log('❌ Email error:', error.message);
@@ -25,44 +27,47 @@ transporter.verify(function(error, success) {
     }
 });
 
-// Send email function
 async function sendEmail(to, subject, html) {
-    const mailOptions = {
-        from: `"PDFWorks Pro" <${process.env.EMAIL_USER}>`,
-        to: to,
-        subject: subject,
-        html: html
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email sent to:', to, 'MessageID:', info.messageId);
-    return info;
+    try {
+        console.log('📧 Sending email to:', to);
+        const info = await transporter.sendMail({
+            from: `"PDFWorks Pro" <${process.env.EMAIL_USER}>`,
+            to: to,
+            subject: subject,
+            html: html
+        });
+        console.log('✅ Email sent to:', to);
+        return info;
+    } catch(error) {
+        console.error('❌ Email failed:', error.message);
+        throw error;
+    }
 }
 
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const logger   = require('./activity-logger');
-const express  = require('express');
+const logger = require('./activity-logger');
+const express = require('express');
 const bodyParser = require('body-parser');
-const cors     = require('cors');
-const bcrypt   = require('bcryptjs');
-const jwt      = require('jsonwebtoken');
-const path     = require('path');
-const fs       = require('fs');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const path = require('path');
+const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const multer   = require('multer');
+const multer = require('multer');
 const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const { encryptPDFBuffer, decryptPDFBuffer } = require('./pdf-encryptor');
 
-// // Debug
-// console.log('RESEND_API_KEY:', process.env.RESEND_API_KEY ? '✅ Set' : '❌ NOT SET');
-// console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ NOT SET');
+console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
+console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ NOT SET');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ NOT SET');
 
 // OTP storage
 const otpStore = {};
 
 // ==================== ADMIN CREDENTIALS ====================
-const ADMIN_EMAIL    = 'admin@pdfworks.com';
+const ADMIN_EMAIL = 'admin@pdfworks.com';
 const ADMIN_PASSWORD = 'admin123';
 
 // ==================== ACTIVITY FILE ====================
@@ -131,29 +136,6 @@ function logUserActivity(userId, action, ip, extra = {}) {
     writeDB(db);
 }
 
-// ==================== SEND EMAIL FUNCTION ====================
-async function sendEmail(to, subject, html) {
-    try {
-        const { data, error } = await resend.emails.send({
-            from: 'PDFWorks Pro <onboarding@resend.dev>',
-            to: to,
-            subject: subject,
-            html: html
-        });
-
-        if (error) {
-            console.error('Resend error:', error);
-            throw new Error(error.message);
-        }
-
-        console.log('✅ Email sent successfully to:', to);
-        return data;
-    } catch(error) {
-        console.error('Send email error:', error.message);
-        throw error;
-    }
-}
-
 console.log('✅ Using JSON file database (no MySQL needed)');
 
 const app = express();
@@ -187,12 +169,12 @@ app.use('/uploads', express.static(uploadDir));
 // ==================== MULTER ====================
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename:    (req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`)
+    filename: (req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`)
 });
 
 const fileFilter = (req, file, cb) => {
     const allowed = [
-        'application/pdf','image/jpeg','image/png','image/jpg',
+        'application/pdf', 'image/jpeg', 'image/png', 'image/jpg',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
@@ -211,8 +193,8 @@ const authenticateToken = (req, res, next) => {
 
     jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
         if (err) {
-            if (err.name === 'TokenExpiredError')  return res.status(403).json({ error: 'Token expired' });
-            if (err.name === 'JsonWebTokenError')  return res.status(403).json({ error: 'Invalid token' });
+            if (err.name === 'TokenExpiredError') return res.status(403).json({ error: 'Token expired' });
+            if (err.name === 'JsonWebTokenError') return res.status(403).json({ error: 'Invalid token' });
             return res.status(403).json({ error: 'Invalid token: ' + err.message });
         }
         req.user = user;
@@ -268,7 +250,11 @@ app.post('/api/auth/register', async (req, res) => {
         };
         saveUser(user);
 
-        const token = jwt.sign({ id: user.id, email, name }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '7d' });
+        const token = jwt.sign(
+            { id: user.id, email, name },
+            process.env.JWT_SECRET || 'your-secret-key',
+            { expiresIn: '7d' }
+        );
         logger.logLogin(email, req.ip || '127.0.0.1');
 
         res.status(201).json({
@@ -316,8 +302,8 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
         const sessionToken = Math.random().toString(36).substring(2) +
-                            Date.now().toString(36) +
-                            Math.random().toString(36).substring(2);
+            Date.now().toString(36) +
+            Math.random().toString(36).substring(2);
 
         saveSession({
             token: sessionToken,
@@ -325,7 +311,6 @@ app.post('/api/auth/login', async (req, res) => {
             createdAt: new Date().toISOString()
         });
 
-        // Log activity
         try {
             let activities = [];
             try {
@@ -393,10 +378,7 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
 app.post('/api/auth/google', async (req, res) => {
     try {
         const { token } = req.body;
-
-        if (!token) {
-            return res.status(400).json({ error: 'Token is required' });
-        }
+        if (!token) return res.status(400).json({ error: 'Token is required' });
 
         const ticket = await googleClient.verifyIdToken({
             idToken: token,
@@ -406,19 +388,14 @@ app.post('/api/auth/google', async (req, res) => {
         const payload = ticket.getPayload();
         const { name, email, picture, sub: googleId } = payload;
 
-        if (!email) {
-            return res.status(400).json({ error: 'Could not get email from Google' });
-        }
+        if (!email) return res.status(400).json({ error: 'Could not get email from Google' });
 
         let user = findUser(email);
 
         if (!user) {
             user = {
                 id: Date.now().toString(),
-                name: name,
-                email: email,
-                picture: picture,
-                googleId: googleId,
+                name, email, picture, googleId,
                 provider: 'google',
                 verified: true,
                 createdAt: new Date().toISOString()
@@ -441,7 +418,7 @@ app.post('/api/auth/google', async (req, res) => {
                             <h2>Hello, ${name}! 👋</h2>
                             <p>Your account has been created successfully with Google.</p>
                             <p>You now have access to all PDF tools!</p>
-                            <a href="https://working-pdf.onrender.com" 
+                            <a href="https://working-pdf.onrender.com"
                                style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px 32px;border-radius:30px;text-decoration:none;font-weight:700;margin-top:20px;">
                                 🚀 Start Using PDFWorks Pro
                             </a>
@@ -460,8 +437,8 @@ app.post('/api/auth/google', async (req, res) => {
         }
 
         const sessionToken = Math.random().toString(36).substring(2) +
-                            Date.now().toString(36) +
-                            Math.random().toString(36).substring(2);
+            Date.now().toString(36) +
+            Math.random().toString(36).substring(2);
 
         saveSession({
             token: sessionToken,
@@ -554,11 +531,15 @@ app.post('/api/auth/send-otp', async (req, res) => {
                 <div style="max-width:600px;margin:40px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.1);">
                     <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px;text-align:center;color:white;">
                         <h1 style="margin:0;font-size:28px;">📄 PDFWorks Pro</h1>
-                        <p style="margin:10px 0 0;opacity:0.9;">${type === 'signup' ? 'Welcome! Verify your email to get started' : 'Here is your login OTP'}</p>
+                        <p style="margin:10px 0 0;opacity:0.9;">
+                            ${type === 'signup' ? 'Welcome! Verify your email to get started' : 'Here is your login OTP'}
+                        </p>
                     </div>
                     <div style="padding:40px;text-align:center;">
                         <h2 style="color:#333;">Your Verification Code</h2>
-                        <p style="color:#666;">Use this OTP to ${type === 'signup' ? 'create your account' : 'login to your account'}</p>
+                        <p style="color:#666;">
+                            Use this OTP to ${type === 'signup' ? 'create your account' : 'login to your account'}
+                        </p>
                         <div style="background:#f8f9ff;border:2px dashed #667eea;border-radius:12px;padding:30px;margin:30px 0;">
                             <div style="font-size:48px;font-weight:900;color:#667eea;letter-spacing:12px;">${otp}</div>
                             <div style="font-size:14px;color:#666;margin-top:10px;">One Time Password</div>
@@ -584,9 +565,9 @@ app.post('/api/auth/send-otp', async (req, res) => {
         res.json({ success: true, message: 'OTP sent to your email' });
 
     } catch (error) {
-        console.error('Send OTP error:', error.message);
+        console.error('❌ Send OTP error:', error.message);
         res.status(500).json({
-            error: 'Failed to send OTP. Please try again.'
+            error: 'Failed to send OTP: ' + error.message
         });
     }
 });
@@ -597,7 +578,6 @@ app.post('/api/auth/verify-otp', async (req, res) => {
         const { email, otp, name, password, type } = req.body;
 
         console.log('Verifying OTP for:', email);
-        console.log('OTP received:', otp);
 
         if (!otpStore[email]) {
             return res.status(400).json({
@@ -686,8 +666,8 @@ app.post('/api/auth/verify-otp', async (req, res) => {
         }
 
         const sessionToken = Math.random().toString(36).substring(2) +
-                            Date.now().toString(36) +
-                            Math.random().toString(36).substring(2);
+            Date.now().toString(36) +
+            Math.random().toString(36).substring(2);
 
         saveSession({
             token: sessionToken,
@@ -695,7 +675,6 @@ app.post('/api/auth/verify-otp', async (req, res) => {
             createdAt: new Date().toISOString()
         });
 
-        // Log activity
         try {
             let activities = [];
             try {
@@ -779,35 +758,36 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 app.get('/api/test-email', async (req, res) => {
     try {
         await sendEmail(
-            'ebranhusain777@gmail.com',
+            process.env.EMAIL_USER,
             'Test Email from PDFWorks',
             '<p>Email is working! ✅</p>'
         );
         res.json({
             success: true,
             message: 'Test email sent!',
-            api_key_set: !!process.env.RESEND_API_KEY
+            email_user: process.env.EMAIL_USER
         });
     } catch(error) {
         res.json({
             success: false,
             error: error.message,
-            api_key_set: !!process.env.RESEND_API_KEY
+            email_user: process.env.EMAIL_USER,
+            pass_set: !!process.env.EMAIL_PASS
         });
     }
 });
 
 // ==================== USER STATS ====================
 app.get('/api/stats', authenticateToken, (req, res) => {
-    const db       = readDB();
+    const db = readDB();
     const activity = db.activity.filter(a => a.user_id === req.user.id);
-    const today    = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
     res.json({
         stats: {
-            total_activities:  activity.length,
-            today_activities:  activity.filter(a => a.timestamp.startsWith(today)).length,
-            tools_used:        new Set(activity.filter(a => a.tool).map(a => a.tool)).size,
-            active_sessions:   db.sessions.filter(s => s.user_id === req.user.id).length
+            total_activities: activity.length,
+            today_activities: activity.filter(a => a.timestamp.startsWith(today)).length,
+            tools_used: new Set(activity.filter(a => a.tool).map(a => a.tool)).size,
+            active_sessions: db.sessions.filter(s => s.user_id === req.user.id).length
         }
     });
 });
@@ -817,9 +797,9 @@ app.post('/api/protect-pdf', upload.single('file'), async (req, res) => {
     try {
         const password = req.body.password;
         if (!password) return res.status(400).json({ error: 'Password missing' });
-        if (!req.file)  return res.status(400).json({ error: 'No file uploaded' });
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-        const pdfBuffer       = fs.readFileSync(req.file.path);
+        const pdfBuffer = fs.readFileSync(req.file.path);
         const encryptedBuffer = await encryptPDFBuffer(pdfBuffer, password);
         logger.logToolUse(req.user?.email || 'guest', 'protect-pdf', req.file.originalname, req.file.size);
         fs.unlinkSync(req.file.path);
@@ -884,9 +864,9 @@ app.post('/api/activity/download', authenticateToken, (req, res) => {
 app.get('/api/admin/activity', requireAdmin, (req, res) => {
     const { type, email, tool, limit = 200, offset = 0 } = req.query;
     let entries = logger.getAll();
-    if (type)  entries = entries.filter(e => e.type  === type);
+    if (type) entries = entries.filter(e => e.type === type);
     if (email) entries = entries.filter(e => e.email === email);
-    if (tool)  entries = entries.filter(e => e.tool  === tool);
+    if (tool) entries = entries.filter(e => e.tool === tool);
     const total = entries.length;
     res.json({ total, entries: entries.slice(parseInt(offset), parseInt(offset) + parseInt(limit)) });
 });
@@ -894,13 +874,13 @@ app.get('/api/admin/activity', requireAdmin, (req, res) => {
 app.get('/api/admin/stats', requireAdmin, (req, res) => {
     const all = logger.getAll();
     res.json({
-        total:        all.length,
-        logins:       all.filter(e => e.type === 'login').length,
-        tool_uses:    all.filter(e => e.type === 'tool_use').length,
-        downloads:    all.filter(e => e.type === 'download').length,
-        users:        [...new Set(all.map(e => e.email).filter(Boolean))].length,
-        tools:        all.reduce((acc, e) => { if (e.tool) acc[e.tool] = (acc[e.tool]||0)+1; return acc; }, {}),
-        recent_users: [...new Set(all.slice(0,50).map(e => e.email).filter(Boolean))].slice(0,10),
+        total: all.length,
+        logins: all.filter(e => e.type === 'login').length,
+        tool_uses: all.filter(e => e.type === 'tool_use').length,
+        downloads: all.filter(e => e.type === 'download').length,
+        users: [...new Set(all.map(e => e.email).filter(Boolean))].length,
+        tools: all.reduce((acc, e) => { if (e.tool) acc[e.tool] = (acc[e.tool] || 0) + 1; return acc; }, {}),
+        recent_users: [...new Set(all.slice(0, 50).map(e => e.email).filter(Boolean))].slice(0, 10),
     });
 });
 
