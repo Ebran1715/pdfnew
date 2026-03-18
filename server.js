@@ -3,22 +3,21 @@ require('dotenv').config();
 const nodemailer = require('nodemailer');
 
 // Create Gmail transporter with IPv4 fix
+// Update your transporter configuration
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
+    port: 465, // Change from 587 to 465
+    secure: true, // Change from false to true
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
-    // Force IPv4 to fix ENETUNREACH error
     connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000,
     tls: {
-        rejectUnauthorized: false,
-        ciphers: 'SSLv3'
+        rejectUnauthorized: false
     },
     // Force IPv4 lookup
     lookup: (hostname, options, callback) => {
@@ -1116,6 +1115,19 @@ app.get('/api/check-token', authenticateToken, (req, res) => {
     res.json({ valid: true, user: req.user });
 });
 
+
+// ==================== DEBUG GOOGLE CONFIG ====================
+// Add this right after your other endpoints
+app.get('/api/debug/env', (req, res) => {
+    res.json({
+        googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
+        googleClientIdPrefix: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.substring(0, 20) + '...' : null,
+        emailUser: process.env.EMAIL_USER ? '✅ Set' : '❌ Missing',
+        emailPass: process.env.EMAIL_PASS ? '✅ Set' : '❌ Missing',
+        nodeEnv: process.env.NODE_ENV || 'not set',
+        port: process.env.PORT || 'not set'
+    });
+});
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3009;
 app.listen(PORT, () => {

@@ -64,6 +64,24 @@
       "createdAt": "2026-03-18T09:54:05.139Z",
       "picture": "https://lh3.googleusercontent.com/a/ACg8ocJ3wjdK-n-F0VAhYMz9v85KSmlQVLXWxokvjOv_U2tlxcg4jzSc=s96-c",
       "googleId": "114073384059901944512"
+    },
+    {
+      "id": "1773831150440",
+      "name": "shamshad",
+      "email": "shamshad.allamm@gmail.com",
+      "password": "$2a$10$.pNRK9t/8rQxkf.y7H6XbOFaQoQxWZ7MqmdF25iRg4tHrQfeoX34K",
+      "provider": "email",
+      "verified": true,
+      "createdAt": "2026-03-18T10:52:30.440Z"
+    },
+    {
+      "id": "1773831868436",
+      "name": "prashant",
+      "email": "prashantghartithapa@gmail.com",
+      "password": "$2a$10$o95KZJdTw3I5/VQ5VGUN6O5Oy9NuzWYWyVS8iyDZGAUATcbqTq.oO",
+      "provider": "email",
+      "verified": true,
+      "createdAt": "2026-03-18T11:04:28.436Z"
     }
   ],
   "sessions": [
@@ -89,11 +107,6 @@
       "token": "qny8sdgzsrmmui0b2uyqaxlj9w0c",
       "email": "ebranhusain777@gmail.com",
       "createdAt": "2026-03-17T10:57:34.230Z"
-    },
-    {
-      "token": "knguw7ioz9mmvwnjyi48nv7r5231x",
-      "email": "ebranhusain777@gmail.com",
-      "createdAt": "2026-03-18T10:35:19.626Z"
     }
   ],
   "activity": [

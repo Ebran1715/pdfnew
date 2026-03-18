@@ -1,5 +1,86 @@
 [
   {
+    "id": 1773831958940,
+    "timestamp": "2026-03-18T11:05:58.940Z",
+    "type": "tool_use",
+    "email": "prashantghartithapa@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773831871182,
+    "timestamp": "2026-03-18T11:04:31.182Z",
+    "type": "tool_use",
+    "email": "prashantghartithapa@gmail.com",
+    "tool": "signup",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773831205790,
+    "timestamp": "2026-03-18T10:53:25.790Z",
+    "type": "tool_use",
+    "email": "shamshad.allamm@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773831200379,
+    "timestamp": "2026-03-18T10:53:20.379Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773831199920,
+    "timestamp": "2026-03-18T10:53:19.920Z",
+    "type": "tool_use",
+    "email": "shamshad.allamm@gmail.com",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773831153413,
+    "timestamp": "2026-03-18T10:52:33.413Z",
+    "type": "tool_use",
+    "email": "shamshad.allamm@gmail.com",
+    "tool": "signup",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773830998214,
+    "timestamp": "2026-03-18T10:49:58.214Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773830993412,
+    "timestamp": "2026-03-18T10:49:53.412Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773830785428,
+    "timestamp": "2026-03-18T10:46:25.428Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
     "id": 1773830119667,
     "timestamp": "2026-03-18T10:35:19.667Z",
     "type": "tool_use",
@@ -1123,5 +1204,26 @@
     "email": "ebranhusain777@gmail.com",
     "type": "login",
     "timestamp": "2026-03-18T10:35:19.630Z"
+  },
+  {
+    "id": "1773830993398",
+    "tool": "google_login",
+    "email": "ebranhusain777@gmail.com",
+    "type": "login",
+    "timestamp": "2026-03-18T10:49:53.398Z"
+  },
+  {
+    "id": "1773831153400",
+    "tool": "signup",
+    "email": "shamshad.allamm@gmail.com",
+    "type": "signup",
+    "timestamp": "2026-03-18T10:52:33.400Z"
+  },
+  {
+    "id": "1773831871174",
+    "tool": "signup",
+    "email": "prashantghartithapa@gmail.com",
+    "type": "signup",
+    "timestamp": "2026-03-18T11:04:31.175Z"
   }
 ]
