@@ -2,13 +2,13 @@ require('dotenv').config();
 
 const nodemailer = require('nodemailer');
 
+
 // Create Gmail transporter with IPv4 fix
-// Update your transporter configuration
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 465, // Change from 587 to 465
-    secure: true, // Change from false to true
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -597,6 +597,8 @@ app.post('/api/auth/send-otp', async (req, res) => {
         const { email, type } = req.body;
         
         console.log('📧 Send OTP request for:', email, 'type:', type);
+        console.log('📧 EMAIL_USER:', process.env.EMAIL_USER ? '✅ Set' : '❌ Missing');
+        console.log('📧 EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ Missing');
 
         // Validate email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -635,6 +637,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
         // Send email
         try {
+            console.log('📤 Attempting to send email via Gmail...');
             await sendEmail(
                 email,
                 'Your OTP Code - PDFWorks Pro',
@@ -644,8 +647,13 @@ app.post('/api/auth/send-otp', async (req, res) => {
             res.json({ success: true, message: 'OTP sent to your email' });
         } catch(emailError) {
             console.error('❌ Email sending failed:', emailError);
+            console.error('❌ Error code:', emailError.code);
+            console.error('❌ Error message:', emailError.message);
+            
+            // Send a more helpful error message to the client
             res.status(500).json({ 
-                error: 'Failed to send OTP email: ' + emailError.message 
+                error: 'Failed to send OTP email. Please try again later.',
+                details: process.env.NODE_ENV === 'development' ? emailError.message : undefined
             });
         }
 
@@ -654,7 +662,34 @@ app.post('/api/auth/send-otp', async (req, res) => {
         res.status(500).json({ error: 'Server error: ' + error.message });
     }
 });
-
+// ==================== TEST EMAIL ENDPOINT ====================
+app.get('/api/test-email', async (req, res) => {
+    try {
+        const testEmail = req.query.email || process.env.EMAIL_USER;
+        console.log('📧 Test email requested for:', testEmail);
+        
+        await sendEmail(
+            testEmail,
+            'Test Email from PDFWorks Pro',
+            `<h1>Test Successful!</h1><p>Email is working at ${new Date().toLocaleString()}</p>`
+        );
+        
+        res.json({
+            success: true,
+            message: 'Test email sent! Check your inbox',
+            email_user: process.env.EMAIL_USER,
+            to: testEmail
+        });
+        
+    } catch(error) {
+        console.error('❌ Test email error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            email_user: process.env.EMAIL_USER
+        });
+    }
+});
 // ==================== VERIFY OTP ====================
 app.post('/api/auth/verify-otp', async (req, res) => {
     try {
