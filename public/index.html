@@ -15928,25 +15928,45 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==================== GOOGLE LOGIN ====================
+// ==================== GOOGLE LOGIN HANDLER ====================
 async function handleGoogleLogin(response) {
     try {
+        console.log('🔑 Google login initiated');
+        console.log('Response received:', response ? 'Yes' : 'No');
+        
+        if (!response || !response.credential) {
+            console.error('❌ No credential in Google response');
+            showToast('Google login failed: No credential received', 'error');
+            return;
+        }
+        
         showToast('Signing in with Google...', 'info');
         
+        console.log('📤 Sending token to backend...');
         const res = await fetch(`${API}/api/auth/google`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: response.credential })
         });
 
+        console.log('📥 Response status:', res.status);
         const data = await res.json();
+        console.log('📦 Response data:', data);
 
         if (!res.ok) {
-            throw new Error(data.error || 'Google login failed');
+            throw new Error(data.error || `Google login failed (${res.status})`);
+        }
+
+        // Validate response data
+        if (!data.token || !data.user) {
+            console.error('❌ Invalid response data:', data);
+            throw new Error('Invalid response from server');
         }
 
         // Save to localStorage
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        console.log('✅ Auth data saved to localStorage');
 
         // Update app state
         window.isLoggedIn = true;
@@ -15967,35 +15987,35 @@ async function handleGoogleLogin(response) {
             if (data.user.picture) {
                 userAvatar.innerHTML = `<img src="${data.user.picture}" 
                     style="width:100%;height:100%;border-radius:50%;object-fit:cover;" 
-                    onerror="this.parentElement.textContent='${data.user.name.substring(0,2).toUpperCase()}'">`;
+                    onerror="this.parentElement.textContent='${data.user.name?.substring(0,2).toUpperCase() || 'U'}'">`;
             } else {
-                userAvatar.textContent = data.user.name.substring(0, 2).toUpperCase();
+                userAvatar.textContent = data.user.name?.substring(0, 2).toUpperCase() || 'U';
             }
         }
 
-        if (userName) userName.textContent = data.user.name;
-        if (userEmail) userEmail.textContent = data.user.email;
+        if (userName) userName.textContent = data.user.name || 'User';
+        if (userEmail) userEmail.textContent = data.user.email || '';
 
-        // closeAuthModal();
-        // showToast(`Welcome, ${data.user.name}! You are now logged in.`, 'success');
         // Log google login to admin dashboard
-fetch(`${API}/api/log-tool`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        tool: 'google_login',
-        filename: '',
-        filesize: 0,
-        email: data.user.email,
-        type: 'login'
-    })
-}).catch(() => {});
+        fetch(`${API}/api/log-tool`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tool: 'google_login',
+                filename: '',
+                filesize: 0,
+                email: data.user.email,
+                type: 'login'
+            })
+        }).catch(err => console.warn('Failed to log activity:', err));
 
-closeAuthModal();
-showToast(`Welcome, ${data.user.name}! You are now logged in.`, 'success');
+        closeAuthModal();
+        showToast(`Welcome, ${data.user.name || 'User'}! You are now logged in.`, 'success');
+        console.log('✅ Google login completed successfully');
 
     } catch (error) {
-        console.error('Google login error:', error);
+        console.error('❌ Google login error:', error);
+        console.error('Error stack:', error.stack);
         showToast('Google login failed: ' + error.message, 'error');
     }
 }

@@ -413,6 +413,7 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
 });
 
 // Google Login
+// ==================== GOOGLE LOGIN ====================
 app.post('/api/auth/google', async (req, res) => {
     try {
         const { token } = req.body;
@@ -423,14 +424,29 @@ app.post('/api/auth/google', async (req, res) => {
             return res.status(400).json({ error: 'Token is required' });
         }
 
-        console.log('🔍 Verifying Google token...');
+        // Log the first few characters of token for debugging
+        console.log('🔑 Token received (first 50 chars):', token.substring(0, 50) + '...');
+        
+        // Get the client ID from environment
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        console.log('🔑 Using Client ID:', clientId ? clientId.substring(0, 30) + '...' : 'NOT SET');
+
+        if (!clientId) {
+            console.error('❌ GOOGLE_CLIENT_ID not set in environment');
+            return res.status(500).json({ error: 'Server configuration error' });
+        }
+
+        console.log('🔍 Verifying Google token with audience:', clientId.substring(0, 30) + '...');
+        
         const ticket = await googleClient.verifyIdToken({
             idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID
+            audience: clientId
         });
 
         const payload = ticket.getPayload();
         console.log('✅ Google token verified for:', payload.email);
+        console.log('📝 Payload audience:', payload.aud);
+        console.log('📝 Expected audience:', clientId);
         
         const { name, email, picture, sub: googleId } = payload;
 
@@ -526,6 +542,13 @@ app.post('/api/auth/google', async (req, res) => {
     } catch (error) {
         console.error('❌ Google auth error:', error);
         console.error('Error details:', error.message);
+        console.error('Error name:', error.name);
+        
+        if (error.message.includes('audience')) {
+            console.error('⚠️ Audience mismatch detected!');
+            console.error('Check that your GOOGLE_CLIENT_ID in .env matches exactly what\'s in Google Cloud Console');
+        }
+        
         res.status(401).json({ error: 'Google authentication failed: ' + error.message });
     }
 });

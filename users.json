@@ -61,7 +61,9 @@
       "password": "$2a$10$EMjJwT8T04Qu/IPE2w6JJ.lM6IwyECuqFebnDX9Ixg7kZl7n/W.bW",
       "provider": "email",
       "verified": true,
-      "createdAt": "2026-03-18T09:54:05.139Z"
+      "createdAt": "2026-03-18T09:54:05.139Z",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocJ3wjdK-n-F0VAhYMz9v85KSmlQVLXWxokvjOv_U2tlxcg4jzSc=s96-c",
+      "googleId": "114073384059901944512"
     }
   ],
   "sessions": [
