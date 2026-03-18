@@ -1,5 +1,554 @@
 [
   {
+    "id": 1773827669174,
+    "timestamp": "2026-03-18T09:54:29.174Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773827647972,
+    "timestamp": "2026-03-18T09:54:07.972Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "signup",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773827451426,
+    "timestamp": "2026-03-18T09:50:51.426Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773827445403,
+    "timestamp": "2026-03-18T09:50:45.403Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "selected-keywords-2026-03-04-protected.pdf",
+    "filesize": 5609
+  },
+  {
+    "id": 1773827441363,
+    "timestamp": "2026-03-18T09:50:41.363Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "selected-keywords-2026-03-04-protected.pdf",
+    "filesize": 5609
+  },
+  {
+    "id": 1773827404665,
+    "timestamp": "2026-03-18T09:50:04.665Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "selected-keywords-2026-03-04.pdf",
+    "filesize": 4837
+  },
+  {
+    "id": 1773827404633,
+    "timestamp": "2026-03-18T09:50:04.633Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "selected-keywords-2026-03-04.pdf",
+    "filesize": 4837
+  },
+  {
+    "id": 1773827323856,
+    "timestamp": "2026-03-18T09:48:43.856Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827308693,
+    "timestamp": "2026-03-18T09:48:28.693Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773827308650,
+    "timestamp": "2026-03-18T09:48:28.650Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773827292417,
+    "timestamp": "2026-03-18T09:48:12.417Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unprotect-pdf",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773827292357,
+    "timestamp": "2026-03-18T09:48:12.357Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773827278827,
+    "timestamp": "2026-03-18T09:47:58.827Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773827278476,
+    "timestamp": "2026-03-18T09:47:58.476Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773827259200,
+    "timestamp": "2026-03-18T09:47:39.200Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unprotect-pdf",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773827259135,
+    "timestamp": "2026-03-18T09:47:39.135Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773827243600,
+    "timestamp": "2026-03-18T09:47:23.600Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected (1).pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827242626,
+    "timestamp": "2026-03-18T09:47:22.626Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected (1).pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827240986,
+    "timestamp": "2026-03-18T09:47:20.986Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected (1).pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827239631,
+    "timestamp": "2026-03-18T09:47:19.631Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected (1).pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827234883,
+    "timestamp": "2026-03-18T09:47:14.883Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected (1).pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827213243,
+    "timestamp": "2026-03-18T09:46:53.243Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773827213141,
+    "timestamp": "2026-03-18T09:46:53.141Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773827197213,
+    "timestamp": "2026-03-18T09:46:37.213Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unprotect-pdf",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773827197137,
+    "timestamp": "2026-03-18T09:46:37.137Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773827185376,
+    "timestamp": "2026-03-18T09:46:25.376Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827179125,
+    "timestamp": "2026-03-18T09:46:19.125Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827099166,
+    "timestamp": "2026-03-18T09:44:59.166Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827094419,
+    "timestamp": "2026-03-18T09:44:54.419Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827089532,
+    "timestamp": "2026-03-18T09:44:49.532Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773827077554,
+    "timestamp": "2026-03-18T09:44:37.554Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773827077443,
+    "timestamp": "2026-03-18T09:44:37.443Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "protect",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773827062483,
+    "timestamp": "2026-03-18T09:44:22.483Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773827019044,
+    "timestamp": "2026-03-18T09:43:39.044Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unprotect-pdf",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773827018989,
+    "timestamp": "2026-03-18T09:43:38.989Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773827006343,
+    "timestamp": "2026-03-18T09:43:26.343Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773827005951,
+    "timestamp": "2026-03-18T09:43:25.951Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773826960764,
+    "timestamp": "2026-03-18T09:42:40.764Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unprotect-pdf",
+    "filename": "ccna-protected (1).pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773826960696,
+    "timestamp": "2026-03-18T09:42:40.696Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ccna-protected (1).pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1773826945693,
+    "timestamp": "2026-03-18T09:42:25.693Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773826944755,
+    "timestamp": "2026-03-18T09:42:24.755Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1773826930387,
+    "timestamp": "2026-03-18T09:42:10.387Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773826928841,
+    "timestamp": "2026-03-18T09:42:08.841Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773826927021,
+    "timestamp": "2026-03-18T09:42:07.021Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773826897417,
+    "timestamp": "2026-03-18T09:41:37.417Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773826893619,
+    "timestamp": "2026-03-18T09:41:33.619Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773826886218,
+    "timestamp": "2026-03-18T09:41:26.218Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773826714590,
+    "timestamp": "2026-03-18T09:38:34.590Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773826696004,
+    "timestamp": "2026-03-18T09:38:16.004Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773826177077,
+    "timestamp": "2026-03-18T09:29:37.077Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773826159516,
+    "timestamp": "2026-03-18T09:29:19.516Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773826149856,
+    "timestamp": "2026-03-18T09:29:09.856Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773826113113,
+    "timestamp": "2026-03-18T09:28:33.113Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773826105932,
+    "timestamp": "2026-03-18T09:28:25.932Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "signup",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773820326252,
+    "timestamp": "2026-03-18T07:52:06.252Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "logout",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773820321682,
+    "timestamp": "2026-03-18T07:52:01.682Z",
+    "type": "tool_use",
+    "email": "ebranhusain777@gmail.com",
+    "tool": "google_login",
+    "filename": "",
+    "filesize": 0
+  },
+  {
+    "id": 1773819873921,
+    "timestamp": "2026-03-18T07:44:33.921Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773819791784,
+    "timestamp": "2026-03-18T07:43:11.784Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773819781790,
+    "timestamp": "2026-03-18T07:43:01.790Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ebran best resume-protected.pdf",
+    "filesize": 122909
+  },
+  {
+    "id": 1773819748146,
+    "timestamp": "2026-03-18T07:42:28.146Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
+    "id": 1773819747945,
+    "timestamp": "2026-03-18T07:42:27.945Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect",
+    "filename": "ebran best resume.pdf",
+    "filesize": 122445
+  },
+  {
     "id": 1773810628080,
     "timestamp": "2026-03-18T05:10:28.080Z",
     "type": "tool_use",
@@ -484,5 +1033,54 @@
     "email": "ebranhusain777@gmail.com",
     "type": "signup",
     "timestamp": "2026-03-18T05:10:21.282Z"
+  },
+  {
+    "id": "1773820321671",
+    "tool": "google_login",
+    "email": "ebranhusain777@gmail.com",
+    "type": "login",
+    "timestamp": "2026-03-18T07:52:01.671Z"
+  },
+  {
+    "id": "1773826105925",
+    "tool": "signup",
+    "email": "ebranhusain777@gmail.com",
+    "type": "signup",
+    "timestamp": "2026-03-18T09:28:25.925Z"
+  },
+  {
+    "id": "1773826149850",
+    "tool": "login",
+    "email": "ebranhusain777@gmail.com",
+    "type": "login",
+    "timestamp": "2026-03-18T09:29:09.850Z"
+  },
+  {
+    "id": "1773826695994",
+    "tool": "google_login",
+    "email": "ebranhusain777@gmail.com",
+    "type": "login",
+    "timestamp": "2026-03-18T09:38:15.995Z"
+  },
+  {
+    "id": "1773826893541",
+    "tool": "google_login",
+    "email": "ebranhusain777@gmail.com",
+    "type": "login",
+    "timestamp": "2026-03-18T09:41:33.541Z"
+  },
+  {
+    "id": "1773827062474",
+    "tool": "google_login",
+    "email": "ebranhusain777@gmail.com",
+    "type": "login",
+    "timestamp": "2026-03-18T09:44:22.474Z"
+  },
+  {
+    "id": "1773827647960",
+    "tool": "signup",
+    "email": "ebranhusain777@gmail.com",
+    "type": "signup",
+    "timestamp": "2026-03-18T09:54:07.960Z"
   }
 ]

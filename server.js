@@ -996,6 +996,7 @@ app.post('/api/protect-pdf', upload.single('file'), async (req, res) => {
 });
 
 // ==================== UNPROTECT PDF ====================
+// ==================== UNPROTECT PDF ====================
 app.post('/api/unprotect-pdf', upload.single('file'), async (req, res) => {
     try {
         const password = req.body.password || '';
@@ -1017,7 +1018,6 @@ app.post('/api/unprotect-pdf', upload.single('file'), async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 // ==================== LOG ALL TOOLS ====================
 app.post('/api/log-tool', (req, res) => {
     const { tool, filename, filesize, email, type } = req.body;
