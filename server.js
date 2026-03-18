@@ -5,25 +5,72 @@ const nodemailer = require('nodemailer');
 
 // Create Gmail transporter with IPv4 fix
 // Create Gmail transporter with forced IPv4
+const dns = require('dns');
+const net = require('net');
+
+// Force DNS to always use IPv4
+dns.setDefaultResultOrder('ipv4first');
+
+// Create a custom socket connection function
+const createCustomSocket = async () => {
+    return new Promise((resolve, reject) => {
+        // First resolve smtp.gmail.com to IPv4 address
+        dns.lookup('smtp.gmail.com', { family: 4 }, (err, address) => {
+            if (err) {
+                console.error('❌ DNS lookup failed:', err);
+                reject(err);
+                return;
+            }
+            
+            console.log(`📡 Resolved smtp.gmail.com to IPv4: ${address}`);
+            
+            // Create TCP connection using IPv4 address
+            const socket = net.createConnection({
+                host: address,
+                port: 465,
+                family: 4
+            });
+            
+            socket.on('connect', () => {
+                console.log('✅ IPv4 connection established to Gmail');
+                resolve(socket);
+            });
+            
+            socket.on('error', (err) => {
+                console.error('❌ Socket connection error:', err);
+                reject(err);
+            });
+        });
+    });
+};
+
+// Create transporter with custom connection
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    requireTLS: true,
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
     tls: {
-        rejectUnauthorized: false,
-        ciphers: 'SSLv3'
-    },
-    // Force Node's built-in DNS to use IPv4
-    lookup: (hostname, options, callback) => {
-        const dns = require('dns');
-        dns.lookup(hostname, { family: 4 }, callback);
+        rejectUnauthorized: false
     }
 });
+
+// Override the connection method
+transporter.getConnection = async function() {
+    try {
+        const socket = await createCustomSocket();
+        return socket;
+    } catch (error) {
+        console.error('❌ Failed to create custom socket:', error);
+        throw error;
+    }
+};
 // Verify connection on startup
 transporter.verify((error, success) => {
     if (error) {
@@ -1152,15 +1199,60 @@ app.get('/api/check-token', authenticateToken, (req, res) => {
 
 // ==================== DEBUG GOOGLE CONFIG ====================
 // Add this right after your other endpoints
-app.get('/api/debug/env', (req, res) => {
-    res.json({
-        googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing',
-        googleClientIdPrefix: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.substring(0, 20) + '...' : null,
-        emailUser: process.env.EMAIL_USER ? '✅ Set' : '❌ Missing',
-        emailPass: process.env.EMAIL_PASS ? '✅ Set' : '❌ Missing',
-        nodeEnv: process.env.NODE_ENV || 'not set',
-        port: process.env.PORT || 'not set'
-    });
+// ==================== TEST EMAIL WITH DEBUG ====================
+app.get('/api/test-email-debug', async (req, res) => {
+    try {
+        const testEmail = req.query.email || process.env.EMAIL_USER;
+        console.log('🔍 Starting debug email test...');
+        
+        // Test DNS resolution
+        console.log('🔍 Testing DNS resolution...');
+        const addresses = await new Promise((resolve, reject) => {
+            dns.lookup('smtp.gmail.com', { family: 4 }, (err, address) => {
+                if (err) reject(err);
+                else resolve(address);
+            });
+        });
+        console.log('✅ DNS resolved to:', addresses);
+        
+        // Test socket connection
+        console.log('🔍 Testing socket connection...');
+        const socket = await new Promise((resolve, reject) => {
+            const sock = net.createConnection({
+                host: addresses,
+                port: 465,
+                family: 4
+            });
+            sock.on('connect', () => {
+                console.log('✅ Socket connected');
+                sock.end();
+                resolve(true);
+            });
+            sock.on('error', reject);
+            setTimeout(() => reject(new Error('Socket timeout')), 10000);
+        });
+        
+        // Send email
+        await sendEmail(
+            testEmail,
+            'Debug Test Email',
+            `<h1>Debug Test</h1><p>IPv4 connection successful!</p>`
+        );
+        
+        res.json({
+            success: true,
+            message: 'Debug test passed!',
+            resolvedAddress: addresses
+        });
+        
+    } catch (error) {
+        console.error('❌ Debug test failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            stack: error.stack
+        });
+    }
 });
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3009;
