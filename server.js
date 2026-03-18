@@ -6,55 +6,24 @@ const nodemailer = require('nodemailer');
 // Create Gmail transporter with IPv4 fix
 // Create Gmail transporter with forced IPv4
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
     tls: {
         rejectUnauthorized: false,
         ciphers: 'SSLv3'
+    },
+    // Force Node's built-in DNS to use IPv4
+    lookup: (hostname, options, callback) => {
+        const dns = require('dns');
+        dns.lookup(hostname, { family: 4 }, callback);
     }
 });
-
-// Force IPv4 by overriding the getConnection method
-const originalGetConnection = transporter.getConnection;
-transporter.getConnection = function() {
-    return new Promise((resolve, reject) => {
-        const dns = require('dns');
-        dns.lookup('smtp.gmail.com', { family: 4 }, (err, address) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            console.log('📡 Resolved smtp.gmail.com to IPv4:', address);
-            
-            const net = require('net');
-            const socket = net.createConnection({
-                host: address,
-                port: 465,
-                family: 4
-            });
-            
-            socket.on('connect', () => {
-                console.log('✅ IPv4 connection established to Gmail');
-                resolve(socket);
-            });
-            
-            socket.on('error', (err) => {
-                console.error('❌ Socket error:', err);
-                reject(err);
-            });
-        });
-    });
-};
-
 // Verify connection on startup
 transporter.verify((error, success) => {
     if (error) {
