@@ -36,15 +36,7 @@
       "created_at": "2026-03-14T10:46:36.568Z",
       "last_login": null
     },
-    {
-      "id": "1773561887847",
-      "name": "Ebran Husain",
-      "email": "ebranhusain777@gmail.com",
-      "picture": "https://lh3.googleusercontent.com/a/ACg8ocJ3wjdK-n-F0VAhYMz9v85KSmlQVLXWxokvjOv_U2tlxcg4jzSc=s96-c",
-      "googleId": "114073384059901944512",
-      "provider": "google",
-      "createdAt": "2026-03-15T08:04:47.847Z"
-    },
+  
     {
       "id": "98082a98-72b8-44f3-beea-c915f30b931e",
       "name": "xyz",
@@ -256,24 +248,8 @@
       },
       "timestamp": "2026-03-16T05:21:02.192Z"
     },
-    {
-      "id": "8aee7a8f-a907-47ef-a7d8-e6a9ac6a7cba",
-      "user_id": "ebranhusain777@gmail.com",
-      "action": "login",
-      "ip": {
-        "provider": "email"
-      },
-      "timestamp": "2026-03-16T07:19:37.244Z"
-    },
-    {
-      "id": "0050668c-c30c-4b14-ad52-aed0b0ea1a03",
-      "user_id": "ebranhusain777@gmail.com",
-      "action": "login",
-      "ip": {
-        "provider": "email"
-      },
-      "timestamp": "2026-03-16T07:20:40.887Z"
-    },
+
+ 
     {
       "id": "a3183606-8b69-4ddc-90a6-30521dccc976",
       "user_id": "ebranhusain777@gmail.com",
