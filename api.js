@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:3002/api';
+const API_BASE_URL = 'http://localhost:3009/api';
 
 // Store token
 let authToken = localStorage.getItem('authToken');
