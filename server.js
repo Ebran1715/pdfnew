@@ -5,7 +5,10 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 console.log('SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ NOT SET');
 console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
+console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ NOT SET');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ NOT SET');
 
+// ── Single sendEmail function using SendGrid ──────────────────────────────────
 async function sendEmail(to, subject, html) {
     try {
         console.log('📧 Sending email to:', to);
@@ -27,50 +30,6 @@ async function sendEmail(to, subject, html) {
         throw error;
     }
 }
-
-
-async function sendEmail(to, subject, html) {
-    try {
-        console.log('📧 Sending email via Gmail to:', to);
-        
-        const mailOptions = {
-            from: `"PDFWorks Pro" <${process.env.EMAIL_USER}>`,
-            to: to,
-            subject: subject,
-            html: html,
-            headers: {
-                'X-Priority': '1',
-                'X-MSMail-Priority': 'High'
-            }
-        };
-        
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Email sent successfully, ID:', info.messageId);
-        return info;
-        
-    } catch(error) {
-        console.error('❌ Gmail error:', error.message);
-        console.error('❌ Error code:', error.code);
-        console.error('❌ Error command:', error.command);
-        
-        if (error.code === 'EAUTH') {
-            console.error('❌ Authentication failed - check your app password');
-            console.error('📝 Get app password at: https://myaccount.google.com/apppasswords');
-        }
-        if (error.code === 'ESOCKET') {
-            console.error('❌ Socket error - network issue or IPv6 problem');
-        }
-        if (error.message.includes('ENETUNREACH')) {
-            console.error('❌ IPv6 unreachable - forcing IPv4 should fix this');
-        }
-        
-        throw error;
-    }
-}
-
-console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
-console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ NOT SET');
-console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ NOT SET');
 
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -164,15 +123,14 @@ console.log('✅ Using JSON file database (no MySQL needed)');
 
 const app = express();
 
-// ==================== CORS and Headers ====================
+// ==================== CORS ====================
 app.use(cors({
-    origin:  ['http://localhost:3009', 'https://working-pdf.onrender.com'],
+    origin: ['http://localhost:3009', 'https://working-pdf.onrender.com'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Fix for Cross-Origin-Opener-Policy
 app.use((req, res, next) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
     res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
@@ -258,7 +216,6 @@ const requireAdmin = (req, res, next) => {
 
 // ==================== AUTH ROUTES ====================
 
-// Register
 app.post('/api/auth/register', async (req, res) => {
     const { name, email, password } = req.body;
     if (!name || !email || !password)
@@ -271,8 +228,7 @@ app.post('/api/auth/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = {
             id: uuidv4(),
-            name,
-            email,
+            name, email,
             password: hashedPassword,
             is_premium: false,
             created_at: new Date().toISOString(),
@@ -298,25 +254,19 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-// Login
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
+        if (!email || !password)
             return res.status(400).json({ error: 'Email and password are required' });
-        }
 
         const user = findUser(email);
-        if (!user) {
+        if (!user)
             return res.status(400).json({ error: 'No account found with this email' });
-        }
 
-        if (user.provider === 'google') {
-            return res.status(400).json({
-                error: 'This account uses Google login. Please use the Google button.'
-            });
-        }
+        if (user.provider === 'google')
+            return res.status(400).json({ error: 'This account uses Google login. Please use the Google button.' });
 
         let passwordMatch = false;
         if (user.password) {
@@ -327,19 +277,14 @@ app.post('/api/auth/login', async (req, res) => {
             }
         }
 
-        if (!passwordMatch) {
+        if (!passwordMatch)
             return res.status(400).json({ error: 'Incorrect password' });
-        }
 
         const sessionToken = Math.random().toString(36).substring(2) +
             Date.now().toString(36) +
             Math.random().toString(36).substring(2);
 
-        saveSession({
-            token: sessionToken,
-            email: email,
-            createdAt: new Date().toISOString()
-        });
+        saveSession({ token: sessionToken, email, createdAt: new Date().toISOString() });
 
         try {
             let activities = [];
@@ -348,29 +293,13 @@ app.post('/api/auth/login', async (req, res) => {
                 activities = JSON.parse(data);
                 if (!Array.isArray(activities)) activities = [];
             } catch(e) { activities = []; }
-
-            activities.push({
-                id: Date.now().toString(),
-                tool: 'login',
-                email: email,
-                type: 'login',
-                timestamp: new Date().toISOString()
-            });
-
+            activities.push({ id: Date.now().toString(), tool: 'login', email, type: 'login', timestamp: new Date().toISOString() });
             fs.writeFileSync(activityFile, JSON.stringify(activities, null, 2));
-        } catch(e) {
-            console.error('Activity log error:', e);
-        }
+        } catch(e) { console.error('Activity log error:', e); }
 
         res.json({
             token: sessionToken,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                provider: user.provider || 'email',
-                verified: true
-            }
+            user: { id: user.id, name: user.name, email: user.email, provider: user.provider || 'email', verified: true }
         });
 
     } catch (error) {
@@ -379,7 +308,6 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Logout
 app.post('/api/auth/logout', (req, res) => {
     try {
         const authHeader = req.headers['authorization'];
@@ -391,73 +319,37 @@ app.post('/api/auth/logout', (req, res) => {
     }
 });
 
-// Get current user
 app.get('/api/auth/me', authenticateToken, (req, res) => {
     const user = readDB().users.find(u => u.id === req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({
-        user: {
-            id: user.id, name: user.name, email: user.email,
-            is_premium: user.is_premium,
-            created_at: user.created_at, last_login: user.last_login
-        }
+        user: { id: user.id, name: user.name, email: user.email, is_premium: user.is_premium, created_at: user.created_at, last_login: user.last_login }
     });
 });
 
-// Google Login
-// ==================== GOOGLE LOGIN ====================
 app.post('/api/auth/google', async (req, res) => {
     try {
         const { token } = req.body;
         console.log('🔑 Google login attempt');
-        
-        if (!token) {
-            console.log('❌ No token provided');
-            return res.status(400).json({ error: 'Token is required' });
-        }
 
-        // Log the first few characters of token for debugging
-        console.log('🔑 Token received (first 50 chars):', token.substring(0, 50) + '...');
-        
-        // Get the client ID from environment
+        if (!token) return res.status(400).json({ error: 'Token is required' });
+
         const clientId = process.env.GOOGLE_CLIENT_ID;
-        console.log('🔑 Using Client ID:', clientId ? clientId.substring(0, 30) + '...' : 'NOT SET');
+        if (!clientId) return res.status(500).json({ error: 'Server configuration error' });
 
-        if (!clientId) {
-            console.error('❌ GOOGLE_CLIENT_ID not set in environment');
-            return res.status(500).json({ error: 'Server configuration error' });
-        }
-
-        console.log('🔍 Verifying Google token with audience:', clientId.substring(0, 30) + '...');
-        
-        const ticket = await googleClient.verifyIdToken({
-            idToken: token,
-            audience: clientId
-        });
-
+        const ticket = await googleClient.verifyIdToken({ idToken: token, audience: clientId });
         const payload = ticket.getPayload();
-        console.log('✅ Google token verified for:', payload.email);
-        console.log('📝 Payload audience:', payload.aud);
-        console.log('📝 Expected audience:', clientId);
-        
         const { name, email, picture, sub: googleId } = payload;
 
-        if (!email) {
-            console.log('❌ No email in Google payload');
-            return res.status(400).json({ error: 'Could not get email from Google' });
-        }
+        if (!email) return res.status(400).json({ error: 'Could not get email from Google' });
 
         let user = findUser(email);
-        console.log('User found in DB:', user ? 'Yes' : 'No');
 
         if (!user) {
-            // Create new user
             user = {
                 id: Date.now().toString(),
                 name: name || email.split('@')[0],
-                email,
-                picture,
-                googleId,
+                email, picture, googleId,
                 provider: 'google',
                 verified: true,
                 createdAt: new Date().toISOString(),
@@ -466,37 +358,36 @@ app.post('/api/auth/google', async (req, res) => {
             saveUser(user);
             console.log('✅ New Google user created:', email);
 
-            // Send welcome email (don't block if fails)
             try {
-                await sendEmail(
-                    email,
-                    'Welcome to PDFWorks Pro! 🎉',
-                    `<h1>Welcome!</h1><p>Your account has been created successfully.</p>`
+                await sendEmail(email, 'Welcome to PDFWorks Pro! 🎉',
+                    `<div style="font-family:Arial;max-width:600px;margin:0 auto;">
+                        <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px;text-align:center;color:white;border-radius:16px 16px 0 0;">
+                            <h1>📄 PDFWorks Pro</h1><p>Welcome aboard! 🎉</p>
+                        </div>
+                        <div style="padding:40px;background:white;border-radius:0 0 16px 16px;">
+                            <h2>Hello, ${name}! 👋</h2>
+                            <p>Your account has been created successfully with Google.</p>
+                            <a href="https://working-pdf.onrender.com" style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px 32px;border-radius:30px;text-decoration:none;font-weight:700;margin-top:20px;">
+                                🚀 Start Using PDFWorks Pro
+                            </a>
+                        </div>
+                    </div>`
                 );
             } catch(emailError) {
                 console.error('Welcome email failed:', emailError.message);
             }
-
         } else {
-            // Update existing user
             user.picture = picture;
             user.googleId = googleId;
             saveUser(user);
-            console.log('✅ Existing user updated:', email);
         }
 
-        // Create session token
         const sessionToken = Math.random().toString(36).substring(2) +
             Date.now().toString(36) +
             Math.random().toString(36).substring(2);
 
-        saveSession({
-            token: sessionToken,
-            email: email,
-            createdAt: new Date().toISOString()
-        });
+        saveSession({ token: sessionToken, email, createdAt: new Date().toISOString() });
 
-        // Log activity
         try {
             let activities = [];
             try {
@@ -504,48 +395,22 @@ app.post('/api/auth/google', async (req, res) => {
                 activities = JSON.parse(data);
                 if (!Array.isArray(activities)) activities = [];
             } catch(e) { activities = []; }
-
-            activities.push({
-                id: Date.now().toString(),
-                tool: 'google_login',
-                email: email,
-                type: 'login',
-                timestamp: new Date().toISOString()
-            });
-
+            activities.push({ id: Date.now().toString(), tool: 'google_login', email, type: 'login', timestamp: new Date().toISOString() });
             fs.writeFileSync(activityFile, JSON.stringify(activities, null, 2));
-        } catch(e) {
-            console.error('Activity log error:', e);
-        }
+        } catch(e) { console.error('Activity log error:', e); }
 
-        console.log('✅ Google login successful for:', email);
         res.json({
             token: sessionToken,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                picture: user.picture,
-                provider: 'google',
-                is_premium: user.is_premium || false
-            }
+            user: { id: user.id, name: user.name, email: user.email, picture: user.picture, provider: 'google', is_premium: user.is_premium || false }
         });
 
     } catch (error) {
-        console.error('❌ Google auth error:', error);
-        console.error('Error details:', error.message);
-        console.error('Error name:', error.name);
-        
-        if (error.message.includes('audience')) {
-            console.error('⚠️ Audience mismatch detected!');
-            console.error('Check that your GOOGLE_CLIENT_ID in .env matches exactly what\'s in Google Cloud Console');
-        }
-        
+        console.error('❌ Google auth error:', error.message);
         res.status(401).json({ error: 'Google authentication failed: ' + error.message });
     }
 });
 
-// Helper function for OTP email HTML
+// ==================== OTP EMAIL TEMPLATE ====================
 function generateOTPEmail(otp, type) {
     return `
     <!DOCTYPE html>
@@ -560,9 +425,7 @@ function generateOTPEmail(otp, type) {
             </div>
             <div style="padding:40px;text-align:center;">
                 <h2 style="color:#333;">Your Verification Code</h2>
-                <p style="color:#666;">
-                    Use this OTP to ${type === 'signup' ? 'create your account' : 'login to your account'}
-                </p>
+                <p style="color:#666;">Use this OTP to ${type === 'signup' ? 'create your account' : 'login'}</p>
                 <div style="background:#f8f9ff;border:2px dashed #667eea;border-radius:12px;padding:30px;margin:30px 0;">
                     <div style="font-size:48px;font-weight:900;color:#667eea;letter-spacing:12px;">${otp}</div>
                     <div style="font-size:14px;color:#666;margin-top:10px;">One Time Password</div>
@@ -580,47 +443,35 @@ function generateOTPEmail(otp, type) {
             </div>
         </div>
     </body>
-    </html>
-    `;
+    </html>`;
 }
 
 // ==================== SEND OTP ====================
 app.post('/api/auth/send-otp', async (req, res) => {
     try {
         const { email, type } = req.body;
-        
+
         console.log('📧 Send OTP request for:', email, 'type:', type);
-        console.log('📧 EMAIL_USER:', process.env.EMAIL_USER ? '✅ Set' : '❌ Missing');
-        console.log('📧 EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Set' : '❌ Missing');
 
-        // Validate email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
+        if (!emailRegex.test(email))
             return res.status(400).json({ error: 'Please enter a valid email address' });
-        }
 
-        // Check if user exists based on type
         if (type === 'login') {
             const user = findUser(email);
-            if (!user) {
-                return res.status(400).json({ error: 'No account found with this email' });
-            }
+            if (!user) return res.status(400).json({ error: 'No account found with this email' });
         }
 
         if (type === 'signup') {
             const user = findUser(email);
-            if (user) {
-                return res.status(400).json({ error: 'Email already registered. Please login.' });
-            }
+            if (user) return res.status(400).json({ error: 'Email already registered. Please login.' });
         }
 
-        // Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Store OTP
         otpStore[email] = {
-            otp: otp,
-            type: type,
+            otp,
+            type,
             createdAt: Date.now(),
             expiresAt: Date.now() + (10 * 60 * 1000),
             attempts: 0
@@ -628,61 +479,17 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
         console.log(`✅ OTP generated for ${email}: ${otp}`);
 
-        // Send email
-        try {
-            console.log('📤 Attempting to send email via Gmail...');
-            await sendEmail(
-                email,
-                'Your OTP Code - PDFWorks Pro',
-                generateOTPEmail(otp, type)
-            );
-            console.log(`✅ Email sent successfully to ${email}`);
-            res.json({ success: true, message: 'OTP sent to your email' });
-        } catch(emailError) {
-            console.error('❌ Email sending failed:', emailError);
-            console.error('❌ Error code:', emailError.code);
-            console.error('❌ Error message:', emailError.message);
-            
-            // Send a more helpful error message to the client
-            res.status(500).json({ 
-                error: 'Failed to send OTP email. Please try again later.',
-                details: process.env.NODE_ENV === 'development' ? emailError.message : undefined
-            });
-        }
+        await sendEmail(email, 'Your OTP Code - PDFWorks Pro', generateOTPEmail(otp, type));
+
+        console.log(`✅ OTP email sent to ${email}`);
+        res.json({ success: true, message: 'OTP sent to your email' });
 
     } catch (error) {
-        console.error('❌ Send OTP error:', error);
-        res.status(500).json({ error: 'Server error: ' + error.message });
+        console.error('❌ Send OTP error:', error.message);
+        res.status(500).json({ error: 'Failed to send OTP. Please try again.' });
     }
 });
-// ==================== TEST EMAIL ENDPOINT ====================
-app.get('/api/test-email', async (req, res) => {
-    try {
-        const testEmail = req.query.email || process.env.EMAIL_USER;
-        console.log('📧 Test email requested for:', testEmail);
-        
-        await sendEmail(
-            testEmail,
-            'Test Email from PDFWorks Pro',
-            `<h1>Test Successful!</h1><p>Email is working at ${new Date().toLocaleString()}</p>`
-        );
-        
-        res.json({
-            success: true,
-            message: 'Test email sent! Check your inbox',
-            email_user: process.env.EMAIL_USER,
-            to: testEmail
-        });
-        
-    } catch(error) {
-        console.error('❌ Test email error:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message,
-            email_user: process.env.EMAIL_USER
-        });
-    }
-});
+
 // ==================== VERIFY OTP ====================
 app.post('/api/auth/verify-otp', async (req, res) => {
     try {
@@ -690,39 +497,26 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 
         console.log('Verifying OTP for:', email);
 
-        if (!otpStore[email]) {
-            return res.status(400).json({
-                error: 'OTP expired or not found. Please request a new one.'
-            });
-        }
+        if (!otpStore[email])
+            return res.status(400).json({ error: 'OTP expired or not found. Please request a new one.' });
 
         if (Date.now() > otpStore[email].expiresAt) {
             delete otpStore[email];
-            return res.status(400).json({
-                error: 'OTP has expired. Please request a new one.'
-            });
+            return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
         }
 
         if (otpStore[email].attempts >= 3) {
             delete otpStore[email];
-            return res.status(400).json({
-                error: 'Too many wrong attempts. Please request a new OTP.'
-            });
+            return res.status(400).json({ error: 'Too many wrong attempts. Please request a new OTP.' });
         }
 
         const storedOTP = String(otpStore[email].otp).trim();
         const receivedOTP = String(otp).trim();
 
-        console.log('Stored OTP:', storedOTP);
-        console.log('Received OTP:', receivedOTP);
-        console.log('Match:', storedOTP === receivedOTP);
-
         if (storedOTP !== receivedOTP) {
             otpStore[email].attempts++;
             const remaining = 3 - otpStore[email].attempts;
-            return res.status(400).json({
-                error: `Wrong OTP. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`
-            });
+            return res.status(400).json({ error: `Wrong OTP. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.` });
         }
 
         delete otpStore[email];
@@ -733,8 +527,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, 10);
             user = {
                 id: Date.now().toString(),
-                name: name,
-                email: email,
+                name, email,
                 password: hashedPassword,
                 provider: 'email',
                 verified: true,
@@ -742,49 +535,34 @@ app.post('/api/auth/verify-otp', async (req, res) => {
             };
             saveUser(user);
 
-            // Send welcome email
             try {
-                await sendEmail(
-                    email,
-                    'Welcome to PDFWorks Pro! 🎉',
-                    `
-                    <div style="font-family:Arial;max-width:600px;margin:0 auto;">
+                await sendEmail(email, 'Welcome to PDFWorks Pro! 🎉',
+                    `<div style="font-family:Arial;max-width:600px;margin:0 auto;">
                         <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px;text-align:center;color:white;border-radius:16px 16px 0 0;">
-                            <h1>📄 PDFWorks Pro</h1>
-                            <p>Welcome aboard! 🎉</p>
+                            <h1>📄 PDFWorks Pro</h1><p>Welcome aboard! 🎉</p>
                         </div>
                         <div style="padding:40px;background:white;border-radius:0 0 16px 16px;">
                             <h2>Hello, ${name}! 👋</h2>
                             <p>Your account has been created successfully!</p>
-                            <p>You now have access to all PDF tools.</p>
-                            <a href="https://working-pdf.onrender.com"
-                               style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px 32px;border-radius:30px;text-decoration:none;font-weight:700;margin-top:20px;">
+                            <a href="https://working-pdf.onrender.com" style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:14px 32px;border-radius:30px;text-decoration:none;font-weight:700;margin-top:20px;">
                                 🚀 Start Using PDFWorks Pro
                             </a>
                         </div>
-                    </div>
-                    `
+                    </div>`
                 );
             } catch(emailError) {
                 console.error('Welcome email failed:', emailError.message);
             }
-
         } else {
             user = findUser(email);
-            if (!user) {
-                return res.status(400).json({ error: 'User not found' });
-            }
+            if (!user) return res.status(400).json({ error: 'User not found' });
         }
 
         const sessionToken = Math.random().toString(36).substring(2) +
             Date.now().toString(36) +
             Math.random().toString(36).substring(2);
 
-        saveSession({
-            token: sessionToken,
-            email: email,
-            createdAt: new Date().toISOString()
-        });
+        saveSession({ token: sessionToken, email, createdAt: new Date().toISOString() });
 
         try {
             let activities = [];
@@ -793,29 +571,13 @@ app.post('/api/auth/verify-otp', async (req, res) => {
                 activities = JSON.parse(data);
                 if (!Array.isArray(activities)) activities = [];
             } catch(e) { activities = []; }
-
-            activities.push({
-                id: Date.now().toString(),
-                tool: type === 'signup' ? 'signup' : 'login',
-                email: email,
-                type: type === 'signup' ? 'signup' : 'login',
-                timestamp: new Date().toISOString()
-            });
-
+            activities.push({ id: Date.now().toString(), tool: type === 'signup' ? 'signup' : 'login', email, type: type === 'signup' ? 'signup' : 'login', timestamp: new Date().toISOString() });
             fs.writeFileSync(activityFile, JSON.stringify(activities, null, 2));
-        } catch(e) {
-            console.error('Activity log error:', e);
-        }
+        } catch(e) { console.error('Activity log error:', e); }
 
         res.json({
             token: sessionToken,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                provider: user.provider || 'email',
-                verified: true
-            }
+            user: { id: user.id, name: user.name, email: user.email, provider: user.provider || 'email', verified: true }
         });
 
     } catch (error) {
@@ -834,28 +596,13 @@ app.post('/api/auth/resend-otp', async (req, res) => {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         otpStore[email] = {
-            otp: otp,
-            type: type,
+            otp, type,
             createdAt: Date.now(),
             expiresAt: Date.now() + (10 * 60 * 1000),
             attempts: 0
         };
 
-        await sendEmail(
-            email,
-            'New OTP Code - PDFWorks Pro',
-            `
-            <div style="font-family:Arial;max-width:500px;margin:0 auto;padding:40px;background:#f9f9f9;border-radius:16px;">
-                <h2 style="color:#667eea;text-align:center;">📄 PDFWorks Pro</h2>
-                <p style="text-align:center;color:#666;">Your new OTP code:</p>
-                <div style="background:#fff;border:2px dashed #667eea;border-radius:12px;padding:30px;text-align:center;margin:20px 0;">
-                    <div style="font-size:48px;font-weight:900;color:#667eea;letter-spacing:12px;">${otp}</div>
-                    <p style="color:#999;margin-top:10px;">Expires in 10 minutes</p>
-                </div>
-                <p style="color:#dc3545;text-align:center;font-size:13px;">Never share this OTP with anyone.</p>
-            </div>
-            `
-        );
+        await sendEmail(email, 'New OTP Code - PDFWorks Pro', generateOTPEmail(otp, type));
 
         res.json({ success: true, message: 'New OTP sent to your email' });
 
@@ -865,50 +612,30 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     }
 });
 
-// ==================== DEBUG ENDPOINTS ====================
+// ==================== TEST EMAIL ====================
+app.get('/api/test-email', async (req, res) => {
+    try {
+        const testEmail = req.query.email || process.env.EMAIL_USER;
+        await sendEmail(testEmail, 'Test Email from PDFWorks Pro',
+            `<h1>Test Successful!</h1><p>Email is working at ${new Date().toLocaleString()}</p>`
+        );
+        res.json({ success: true, message: 'Test email sent!', email_user: process.env.EMAIL_USER, to: testEmail });
+    } catch(error) {
+        res.json({ success: false, error: error.message, email_user: process.env.EMAIL_USER });
+    }
+});
 
-// Debug Google Config
+// ==================== DEBUG ENDPOINTS ====================
 app.get('/api/debug/google-config', (req, res) => {
     res.json({
         clientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Not Set',
         clientIdPrefix: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.substring(0, 15) + '...' : null,
+        sendgridKey: process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ Not Set',
         emailUser: process.env.EMAIL_USER ? '✅ Set' : '❌ Not Set',
-        emailPass: process.env.EMAIL_PASS ? '✅ Set' : '❌ Not Set',
         nodeEnv: process.env.NODE_ENV || 'not set'
     });
 });
 
-// Debug Email Config
-app.get('/api/debug/email-config', async (req, res) => {
-    try {
-        const testResult = {
-            emailUser: process.env.EMAIL_USER ? '✅ Set' : '❌ Not Set',
-            emailPass: process.env.EMAIL_PASS ? '✅ Set (hidden)' : '❌ Not Set',
-            googleClientId: process.env.GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Not Set',
-            transporter: null,
-            otpStore: Object.keys(otpStore).length
-        };
-        
-        // Test transporter if configured
-        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-            try {
-                await transporter.verify();
-                testResult.transporter = '✅ Working';
-            } catch(err) {
-                testResult.transporter = '❌ Failed: ' + err.message;
-            }
-        } else {
-            testResult.transporter = '⚠️ Not configured';
-        }
-        
-        res.json(testResult);
-        
-    } catch(error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Debug OTP Store
 app.get('/api/debug/otp', (req, res) => {
     const email = req.query.email;
     if (email && otpStore[email]) {
@@ -919,93 +646,20 @@ app.get('/api/debug/otp', (req, res) => {
     } else if (email) {
         res.json({ exists: false, message: 'No OTP found for this email' });
     } else {
-        res.json({ 
-            totalStored: Object.keys(otpStore).length,
-            emails: Object.keys(otpStore).map(e => e.replace(/(.{3}).*(.{2})/, '$1***$2'))
-        });
+        res.json({ totalStored: Object.keys(otpStore).length });
     }
 });
 
-// Debug Database
 app.get('/api/debug/db', (req, res) => {
     try {
         const db = readDB();
         res.json({
             users: db.users.length,
             sessions: db.sessions.length,
-            activity: db.activity.length,
-            recentUsers: db.users.slice(-5).map(u => ({
-                email: u.email.replace(/(.{3}).*(.{2})/, '$1***$2'),
-                name: u.name,
-                provider: u.provider || 'email',
-                created: u.createdAt || u.created_at
-            }))
+            activity: db.activity.length
         });
     } catch(error) {
         res.status(500).json({ error: error.message });
-    }
-});
-
-// Test Email Send
-app.post('/api/debug/send-test-email', async (req, res) => {
-    try {
-        const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ error: 'Email required' });
-        }
-        
-        const testOTP = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        await sendEmail(
-            email,
-            'Test Email from PDFWorks Pro',
-            `<h1>Test Email</h1><p>Your test OTP would be: <strong>${testOTP}</strong></p><p>Time: ${new Date().toLocaleString()}</p>`
-        );
-        
-        res.json({ success: true, message: 'Test email sent' });
-        
-    } catch(error) {
-        console.error('Test email error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Clear OTP for email (debug only)
-app.post('/api/debug/clear-otp', (req, res) => {
-    const { email } = req.body;
-    if (email && otpStore[email]) {
-        delete otpStore[email];
-        res.json({ success: true, message: 'OTP cleared' });
-    } else {
-        res.json({ success: false, message: 'No OTP found' });
-    }
-});
-
-// ==================== TEST EMAIL ====================
-app.get('/api/test-email', async (req, res) => {
-    try {
-        const testEmail = req.query.email || process.env.EMAIL_USER;
-        
-        await sendEmail(
-            testEmail,
-            'Test Email from PDFWorks Pro',
-            `<h1>Test Successful!</h1><p>Gmail is working at ${new Date().toLocaleString()}</p>`
-        );
-        
-        res.json({
-            success: true,
-            message: 'Test email sent! Check your inbox',
-            email_user: process.env.EMAIL_USER,
-            to: testEmail
-        });
-        
-    } catch(error) {
-        console.error('Test email error:', error);
-        res.json({
-            success: false,
-            error: error.message,
-            email_user: process.env.EMAIL_USER
-        });
     }
 });
 
@@ -1045,6 +699,7 @@ app.post('/api/protect-pdf', upload.single('file'), async (req, res) => {
     }
 });
 
+// ==================== UNPROTECT PDF ====================
 app.post('/api/unprotect-pdf', upload.single('file'), async (req, res) => {
     try {
         const password = req.body.password || '';
@@ -1053,76 +708,42 @@ app.post('/api/unprotect-pdf', upload.single('file'), async (req, res) => {
         console.log('=== UNPROTECT CALLED ===');
         console.log('🔓 File:', req.file.originalname);
         console.log('🔓 Password:', password);
-        console.log('🔓 File size:', req.file.size);
 
         const pdfBuffer = fs.readFileSync(req.file.path);
         fs.unlink(req.file.path, () => {});
 
-        // Check encryption
         const isEnc = isPDFEncrypted(pdfBuffer);
-        console.log('🔓 Is encrypted:', isEnc);
-
-        if (!isEnc) {
-            return res.status(400).json({
-                error: 'This PDF is not password protected'
-            });
-        }
+        if (!isEnc) return res.status(400).json({ error: 'This PDF is not password protected' });
 
         let decrypted = null;
 
-        // Try custom decrypt
         try {
             decrypted = await decryptPDFBuffer(pdfBuffer, password);
             console.log('✅ Decrypted size:', decrypted.length);
         } catch(e) {
             console.log('❌ Decrypt error:', e.message);
-            if (e.message === 'Incorrect password') {
+            if (e.message === 'Incorrect password')
                 return res.status(400).json({ error: 'Incorrect password. Please try again.' });
-            }
             return res.status(400).json({ error: 'Could not unlock PDF: ' + e.message });
         }
 
-        // Create completely clean PDF using embedPdf
         try {
-            console.log('Building clean PDF...');
-            const freshDoc = await PDFDocument.load(decrypted, {
-                ignoreEncryption: true,
-                throwOnInvalidObject: false
-            });
-
+            const freshDoc = await PDFDocument.load(decrypted, { ignoreEncryption: true, throwOnInvalidObject: false });
             const pageCount = freshDoc.getPageCount();
-            console.log('✅ Pages found:', pageCount);
-
             const cleanDoc = await PDFDocument.create();
-
-            const embeddedPages = await cleanDoc.embedPdf(
-                decrypted,
-                Array.from({ length: pageCount }, (_, i) => i)
-            );
-
-            for (const embeddedPage of embeddedPages) {
-                const page = cleanDoc.addPage([
-                    embeddedPage.width,
-                    embeddedPage.height
-                ]);
-                page.drawPage(embeddedPage);
+            const embeddedPages = await cleanDoc.embedPdf(decrypted, Array.from({ length: pageCount }, (_, i) => i));
+            for (const ep of embeddedPages) {
+                const page = cleanDoc.addPage([ep.width, ep.height]);
+                page.drawPage(ep);
             }
-
             const cleanBytes = await cleanDoc.save();
             decrypted = Buffer.from(cleanBytes);
             console.log('✅ Clean PDF size:', decrypted.length);
-
         } catch(embedErr) {
             console.log('⚠️ embedPdf failed:', embedErr.message);
-            console.log('Using raw decrypted buffer');
         }
 
-        logger.logToolUse(
-            req.user?.email || 'guest',
-            'unprotect-pdf',
-            req.file.originalname,
-            req.file.size
-        );
+        logger.logToolUse(req.user?.email || 'guest', 'unprotect-pdf', req.file.originalname, req.file.size);
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="unlocked.pdf"');
@@ -1133,6 +754,7 @@ app.post('/api/unprotect-pdf', upload.single('file'), async (req, res) => {
         res.status(500).json({ error: 'Failed to unlock: ' + err.message });
     }
 });
+
 // ==================== LOG ALL TOOLS ====================
 app.post('/api/log-tool', (req, res) => {
     const { tool, filename, filesize, email, type } = req.body;
@@ -1208,64 +830,6 @@ app.get('/api/check-token', authenticateToken, (req, res) => {
     res.json({ valid: true, user: req.user });
 });
 
-
-// ==================== DEBUG GOOGLE CONFIG ====================
-// Add this right after your other endpoints
-// ==================== TEST EMAIL WITH DEBUG ====================
-app.get('/api/test-email-debug', async (req, res) => {
-    try {
-        const testEmail = req.query.email || process.env.EMAIL_USER;
-        console.log('🔍 Starting debug email test...');
-        
-        // Test DNS resolution
-        console.log('🔍 Testing DNS resolution...');
-        const addresses = await new Promise((resolve, reject) => {
-            dns.lookup('smtp.gmail.com', { family: 4 }, (err, address) => {
-                if (err) reject(err);
-                else resolve(address);
-            });
-        });
-        console.log('✅ DNS resolved to:', addresses);
-        
-        // Test socket connection
-        console.log('🔍 Testing socket connection...');
-        const socket = await new Promise((resolve, reject) => {
-            const sock = net.createConnection({
-                host: addresses,
-                port: 465,
-                family: 4
-            });
-            sock.on('connect', () => {
-                console.log('✅ Socket connected');
-                sock.end();
-                resolve(true);
-            });
-            sock.on('error', reject);
-            setTimeout(() => reject(new Error('Socket timeout')), 10000);
-        });
-        
-        // Send email
-        await sendEmail(
-            testEmail,
-            'Debug Test Email',
-            `<h1>Debug Test</h1><p>IPv4 connection successful!</p>`
-        );
-        
-        res.json({
-            success: true,
-            message: 'Debug test passed!',
-            resolvedAddress: addresses
-        });
-        
-    } catch (error) {
-        console.error('❌ Debug test failed:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message,
-            stack: error.stack
-        });
-    }
-});
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3009;
 app.listen(PORT, () => {
@@ -1274,12 +838,5 @@ app.listen(PORT, () => {
     console.log(`📁 Admin:   http://localhost:${PORT}/admin.html`);
     console.log(`📁 Health:  http://localhost:${PORT}/api/health`);
     console.log(`📁 Uploads: ${uploadDir}`);
-    console.log(`\n✅ Gmail SMTP configured for ${process.env.EMAIL_USER}`);
     console.log(`\n✅ JSON file database — no MySQL needed!`);
-    console.log(`\n🔍 Debug endpoints:`);
-    console.log(`   • /api/debug/google-config`);
-    console.log(`   • /api/debug/email-config`);
-    console.log(`   • /api/debug/otp`);
-    console.log(`   • /api/debug/db`);
-    console.log(`   • /api/test-email`);
 });

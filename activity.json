@@ -1,5 +1,41 @@
 [
   {
+    "id": 1774003686027,
+    "timestamp": "2026-03-20T10:48:06.027Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unprotect-pdf",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1774003685943,
+    "timestamp": "2026-03-20T10:48:05.943Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "unlock",
+    "filename": "ccna-protected.pdf",
+    "filesize": 2539337
+  },
+  {
+    "id": 1774003663316,
+    "timestamp": "2026-03-20T10:47:43.316Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect-pdf",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
+    "id": 1774003662963,
+    "timestamp": "2026-03-20T10:47:42.963Z",
+    "type": "tool_use",
+    "email": "guest",
+    "tool": "protect",
+    "filename": "ccna.pdf",
+    "filesize": 2538724
+  },
+  {
     "id": 1774002047830,
     "timestamp": "2026-03-20T10:20:47.830Z",
     "type": "tool_use",

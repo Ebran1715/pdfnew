@@ -281,10 +281,12 @@ async function decryptPDFBuffer(encryptedBuf, password) {
 
     // Remove encrypt dictionary object
     let decryptedStr = decryptedBuf.toString('latin1');
-    decryptedStr = decryptedStr.replace(
-        /\d+ 0 obj[\s\S]*?\/Filter\s*\/Standard[\s\S]*?endobj[\r\n]*/g,
-        ''
-    );
+  // Remove ONLY the encrypt dictionary object carefully
+const encObjMatch = decryptedStr.match(/(\d+) 0 obj[^]*?\/Filter\s*\/Standard[^]*?endobj/);
+if (encObjMatch) {
+    console.log('[decrypt] Removing encrypt obj, length:', encObjMatch[0].length);
+    decryptedStr = decryptedStr.replace(encObjMatch[0], '');
+}
 
     decryptedBuf = Buffer.from(decryptedStr, 'latin1');
     console.log('[decrypt] Final decrypted size:', decryptedBuf.length);
