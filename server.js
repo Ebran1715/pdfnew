@@ -1,84 +1,33 @@
 require('dotenv').config();
 
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+console.log('SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ NOT SET');
+console.log('EMAIL_USER:', process.env.EMAIL_USER || '❌ NOT SET');
 
-// Create Gmail transporter with IPv4 fix
-// Create Gmail transporter with forced IPv4
-const dns = require('dns');
-const net = require('net');
-
-// Force DNS to always use IPv4
-dns.setDefaultResultOrder('ipv4first');
-
-// Create a custom socket connection function
-const createCustomSocket = async () => {
-    return new Promise((resolve, reject) => {
-        // First resolve smtp.gmail.com to IPv4 address
-        dns.lookup('smtp.gmail.com', { family: 4 }, (err, address) => {
-            if (err) {
-                console.error('❌ DNS lookup failed:', err);
-                reject(err);
-                return;
-            }
-            
-            console.log(`📡 Resolved smtp.gmail.com to IPv4: ${address}`);
-            
-            // Create TCP connection using IPv4 address
-            const socket = net.createConnection({
-                host: address,
-                port: 465,
-                family: 4
-            });
-            
-            socket.on('connect', () => {
-                console.log('✅ IPv4 connection established to Gmail');
-                resolve(socket);
-            });
-            
-            socket.on('error', (err) => {
-                console.error('❌ Socket connection error:', err);
-                reject(err);
-            });
-        });
-    });
-};
-
-// Create transporter with custom connection
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
-    },
-    family: 4  // Force IPv4
-});
-
-// Override the connection method
-transporter.getConnection = async function() {
+async function sendEmail(to, subject, html) {
     try {
-        const socket = await createCustomSocket();
-        return socket;
-    } catch (error) {
-        console.error('❌ Failed to create custom socket:', error);
+        console.log('📧 Sending email to:', to);
+        await sgMail.send({
+            to: to,
+            from: {
+                email: process.env.EMAIL_USER,
+                name: 'PDFWorks Pro'
+            },
+            subject: subject,
+            html: html
+        });
+        console.log('✅ Email sent to:', to);
+    } catch(error) {
+        console.error('❌ SendGrid error:', error.message);
+        if (error.response) {
+            console.error('❌ Details:', JSON.stringify(error.response.body));
+        }
         throw error;
     }
-};
-// Verify connection on startup
-transporter.verify((error, success) => {
-    if (error) {
-        console.log('❌ Gmail connection error:', error.message);
-        console.log('Make sure EMAIL_USER and EMAIL_PASS are correct in .env');
-        console.log('📝 If using 2FA, you need an App Password: https://myaccount.google.com/apppasswords');
-    } else {
-        console.log('✅ Gmail server is ready to send emails');
-    }
-});
+}
+
 
 async function sendEmail(to, subject, html) {
     try {
@@ -136,7 +85,7 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
-const { encryptPDFBuffer, decryptPDFBuffer } = require('./pdf-encryptor');
+const { encryptPDFBuffer, decryptPDFBuffer, isPDFEncrypted } = require('./pdf-encryptor');
 
 // OTP storage
 const otpStore = {};
@@ -1096,27 +1045,92 @@ app.post('/api/protect-pdf', upload.single('file'), async (req, res) => {
     }
 });
 
-// ==================== UNPROTECT PDF ====================
-// ==================== UNPROTECT PDF ====================
 app.post('/api/unprotect-pdf', upload.single('file'), async (req, res) => {
     try {
         const password = req.body.password || '';
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
+        console.log('=== UNPROTECT CALLED ===');
+        console.log('🔓 File:', req.file.originalname);
+        console.log('🔓 Password:', password);
+        console.log('🔓 File size:', req.file.size);
+
         const pdfBuffer = fs.readFileSync(req.file.path);
         fs.unlink(req.file.path, () => {});
 
-        const decrypted = await decryptPDFBuffer(pdfBuffer, password);
-        logger.logToolUse(req.user?.email || 'guest', 'unprotect-pdf', req.file.originalname, req.file.size);
+        // Check encryption
+        const isEnc = isPDFEncrypted(pdfBuffer);
+        console.log('🔓 Is encrypted:', isEnc);
+
+        if (!isEnc) {
+            return res.status(400).json({
+                error: 'This PDF is not password protected'
+            });
+        }
+
+        let decrypted = null;
+
+        // Try custom decrypt
+        try {
+            decrypted = await decryptPDFBuffer(pdfBuffer, password);
+            console.log('✅ Decrypted size:', decrypted.length);
+        } catch(e) {
+            console.log('❌ Decrypt error:', e.message);
+            if (e.message === 'Incorrect password') {
+                return res.status(400).json({ error: 'Incorrect password. Please try again.' });
+            }
+            return res.status(400).json({ error: 'Could not unlock PDF: ' + e.message });
+        }
+
+        // Create completely clean PDF using embedPdf
+        try {
+            console.log('Building clean PDF...');
+            const freshDoc = await PDFDocument.load(decrypted, {
+                ignoreEncryption: true,
+                throwOnInvalidObject: false
+            });
+
+            const pageCount = freshDoc.getPageCount();
+            console.log('✅ Pages found:', pageCount);
+
+            const cleanDoc = await PDFDocument.create();
+
+            const embeddedPages = await cleanDoc.embedPdf(
+                decrypted,
+                Array.from({ length: pageCount }, (_, i) => i)
+            );
+
+            for (const embeddedPage of embeddedPages) {
+                const page = cleanDoc.addPage([
+                    embeddedPage.width,
+                    embeddedPage.height
+                ]);
+                page.drawPage(embeddedPage);
+            }
+
+            const cleanBytes = await cleanDoc.save();
+            decrypted = Buffer.from(cleanBytes);
+            console.log('✅ Clean PDF size:', decrypted.length);
+
+        } catch(embedErr) {
+            console.log('⚠️ embedPdf failed:', embedErr.message);
+            console.log('Using raw decrypted buffer');
+        }
+
+        logger.logToolUse(
+            req.user?.email || 'guest',
+            'unprotect-pdf',
+            req.file.originalname,
+            req.file.size
+        );
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="unlocked.pdf"');
         res.send(decrypted);
+
     } catch(err) {
-        console.error('Unprotect PDF error:', err.message);
-        if (err.message === 'Incorrect password')
-            return res.status(400).json({ error: 'Incorrect password' });
-        res.status(500).json({ error: err.message });
+        console.error('Unprotect error:', err.message);
+        res.status(500).json({ error: 'Failed to unlock: ' + err.message });
     }
 });
 // ==================== LOG ALL TOOLS ====================

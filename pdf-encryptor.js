@@ -1,16 +1,11 @@
-/**
- * pdf-encryptor.js
- * Pure Node.js PDF encrypt + decrypt. No binaries, no Python.
- * Works on Windows. Requires: pdfkit, pdf-lib
- *
- * npm install pdfkit pdf-lib
- */
-
 const crypto = require('crypto');
 const { PDFDocument } = require('pdf-lib');
 const PDFKitDoc = require('pdfkit');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
-// ── RC4 (pure JS, symmetric — same fn encrypts and decrypts) ─────────────────
+// ── RC4 ──────────────────────────────────────────────────────────────────────
 function rc4(keyBuf, dataBuf) {
     const S = new Uint8Array(256);
     for (let i = 0; i < 256; i++) S[i] = i;
@@ -40,7 +35,6 @@ function padPass(pwd) {
     return out;
 }
 
-// Reconstruct encryption key from PDF /Encrypt values (PDF spec Algorithm 2)
 function computeEncKey(password, O, perms, fileId, keyLen, revision) {
     const md5 = crypto.createHash('md5');
     md5.update(padPass(password));
@@ -56,7 +50,6 @@ function computeEncKey(password, O, perms, fileId, keyLen, revision) {
     return key.slice(0, keyLen);
 }
 
-// Verify password against stored /U entry
 function verifyPassword(password, O, perms, fileId, U, keyLen, revision) {
     const encKey = computeEncKey(password, O, perms, fileId, keyLen, revision);
     if (revision === 2) {
@@ -70,11 +63,11 @@ function verifyPassword(password, O, perms, fileId, U, keyLen, revision) {
     }
 }
 
-// Per-object key derivation
 function getObjKey(encKey, objNum, gen) {
     const suffix = Buffer.alloc(5);
-    suffix[0] = objNum & 0xff; suffix[1] = (objNum >> 8) & 0xff; suffix[2] = (objNum >> 16) & 0xff;
-    suffix[3] = gen & 0xff;    suffix[4] = (gen >> 8) & 0xff;
+    suffix[0] = objNum & 0xff; suffix[1] = (objNum >> 8) & 0xff;
+    suffix[2] = (objNum >> 16) & 0xff;
+    suffix[3] = gen & 0xff; suffix[4] = (gen >> 8) & 0xff;
     return crypto.createHash('md5')
         .update(Buffer.concat([encKey, suffix]))
         .digest()
@@ -88,12 +81,10 @@ async function encryptPDFBuffer(inputBuf, password, ownerPassword) {
     if (!inputBuf.slice(0, 5).toString().startsWith('%PDF'))
         throw new Error('Not a valid PDF file');
 
-    // Normalize with pdf-lib
     const pdfDoc = await PDFDocument.load(inputBuf, { ignoreEncryption: true });
     const normalized = Buffer.from(await pdfDoc.save({ useObjectStreams: false }));
     const pdfStr = normalized.toString('latin1');
 
-    // ONE pdfkit instance — same instance for encryptFn AND /Encrypt dict output
     const pkDoc = new PDFKitDoc({
         userPassword: password,
         ownerPassword: ownerPassword,
@@ -102,7 +93,6 @@ async function encryptPDFBuffer(inputBuf, password, ownerPassword) {
     });
     const security = pkDoc._security;
 
-    // Encrypt all streams
     let result = '';
     let pos = 0;
     const objRegex = /(\d+) (\d+) obj\b/g;
@@ -115,7 +105,7 @@ async function encryptPDFBuffer(inputBuf, password, ownerPassword) {
         const objBody = pdfStr.slice(objStart, endObjIdx + 6);
         const streamMarker = objBody.match(/\bstream\r?\n/);
         if (!streamMarker) continue;
-        const streamStart  = objStart + streamMarker.index + streamMarker[0].length;
+        const streamStart = objStart + streamMarker.index + streamMarker[0].length;
         const endStreamIdx = pdfStr.indexOf('\nendstream', streamStart);
         if (endStreamIdx === -1) continue;
 
@@ -126,17 +116,20 @@ async function encryptPDFBuffer(inputBuf, password, ownerPassword) {
     }
     result += pdfStr.slice(pos, pdfStr.lastIndexOf('startxref')).trimEnd();
 
-    // Collect pdfkit output to extract /Encrypt dict and /ID
     const pkChunks = [];
-    await new Promise(resolve => { pkDoc.on('data', c => pkChunks.push(c)); pkDoc.on('end', resolve); pkDoc.end(); });
+    await new Promise(resolve => {
+        pkDoc.on('data', c => pkChunks.push(c));
+        pkDoc.on('end', resolve);
+        pkDoc.end();
+    });
     const pkStr = Buffer.concat(pkChunks).toString('latin1');
 
     const encDictMatch = pkStr.match(/\d+ 0 obj\s*\n<<\s*\n\/Filter \/Standard[\s\S]+?endobj/);
-    const idMatch      = pkStr.match(/\/ID \[(<[a-f0-9]+> <[a-f0-9]+>)\]/i);
+    const idMatch = pkStr.match(/\/ID \[(<[a-f0-9]+> <[a-f0-9]+>)\]/i);
     if (!encDictMatch || !idMatch) throw new Error('pdfkit did not produce /Encrypt dict');
 
-    const encObjNum    = parseInt(pdfStr.match(/\/Size (\d+)/)[1]);
-    const encDictStr   = encDictMatch[0].replace(/^\d+ 0 obj/, `${encObjNum} 0 obj`);
+    const encObjNum = parseInt(pdfStr.match(/\/Size (\d+)/)[1]);
+    const encDictStr = encDictMatch[0].replace(/^\d+ 0 obj/, `${encObjNum} 0 obj`);
     const encObjOffset = Buffer.byteLength(result, 'latin1') + 1;
     result += '\n' + encDictStr + '\n';
 
@@ -151,8 +144,8 @@ async function encryptPDFBuffer(inputBuf, password, ownerPassword) {
         `trailer`, `<<`,
         `/Size ${encObjNum + 1}`,
         prevSxref ? `/Prev ${prevSxref[1]}` : '',
-        rootMatch  ? `/Root ${rootMatch[1]}` : '',
-        infoMatch  ? `/Info ${infoMatch[1]}` : '',
+        rootMatch ? `/Root ${rootMatch[1]}` : '',
+        infoMatch ? `/Info ${infoMatch[1]}` : '',
         `/Encrypt ${encObjNum} 0 R`,
         `/ID [${idMatch[1]}]`,
         `>>`, `startxref`, `${xrefOffset}`, `%%EOF`, ``
@@ -165,22 +158,44 @@ async function encryptPDFBuffer(inputBuf, password, ownerPassword) {
 async function decryptPDFBuffer(encryptedBuf, password) {
     const pdfStr = encryptedBuf.toString('latin1');
 
-    const encDictStart = pdfStr.indexOf('/Filter /Standard');
-    if (encDictStart === -1) return encryptedBuf; // not encrypted
+    // Search for encrypt dictionary
+    let encDictStart = pdfStr.indexOf('/Filter /Standard');
 
-    const encSection = pdfStr.slice(encDictStart, encDictStart + 500);
+    if (encDictStart === -1) {
+        const encryptRef = pdfStr.match(/\/Encrypt (\d+) (\d+) R/);
+        if (encryptRef) {
+            const encObjNum = encryptRef[1];
+            const encObjPattern = new RegExp(`${encObjNum} \\d+ obj`);
+            const encObjMatch = pdfStr.match(encObjPattern);
+            if (encObjMatch) {
+                encDictStart = pdfStr.indexOf('/Filter /Standard', encObjMatch.index);
+            }
+        }
+    }
 
-    const oMatch  = encSection.match(/\/O <([A-F0-9]+)>/i);
-    const uMatch  = encSection.match(/\/U <([A-F0-9]+)>/i);
-    const pMatch  = encSection.match(/\/P (-?\d+)/);
-    const idMatch = pdfStr.match(/\/ID\s*\[?\s*<([a-f0-9]+)>/i);
-    const vVal    = parseInt((encSection.match(/\/V (\d+)/) || [])[1] || '1');
-    const rVal    = parseInt((encSection.match(/\/R (\d+)/) || [])[1] || '2');
+    if (encDictStart === -1) {
+        console.log('[decrypt] Not encrypted');
+        return encryptedBuf;
+    }
+
+    const encSection = pdfStr.slice(
+        Math.max(0, encDictStart - 200),
+        encDictStart + 1000
+    );
+
+    const oMatch   = encSection.match(/\/O <([A-F0-9]+)>/i);
+    const uMatch   = encSection.match(/\/U <([A-F0-9]+)>/i);
+    const pMatch   = encSection.match(/\/P (-?\d+)/);
+    const idMatch  = pdfStr.match(/\/ID\s*\[?\s*<([a-f0-9]+)>/i);
+    const vVal     = parseInt((encSection.match(/\/V (\d+)/) || [])[1] || '1');
+    const rVal     = parseInt((encSection.match(/\/R (\d+)/) || [])[1] || '2');
     const lenMatch = encSection.match(/\/Length (\d+)/);
-    const keyLen  = lenMatch ? parseInt(lenMatch[1]) / 8 : (vVal === 1 ? 5 : 16);
+    const keyLen   = lenMatch ? parseInt(lenMatch[1]) / 8 : (vVal === 1 ? 5 : 16);
+
+    console.log('[decrypt] V:', vVal, '| R:', rVal, '| KeyLen:', keyLen);
 
     if (!oMatch || !uMatch || !pMatch || !idMatch)
-        throw new Error('Could not parse encryption parameters from PDF');
+        throw new Error('Could not parse encryption parameters');
 
     const O      = Buffer.from(oMatch[1], 'hex');
     const U      = Buffer.from(uMatch[1], 'hex');
@@ -193,41 +208,127 @@ async function decryptPDFBuffer(encryptedBuf, password) {
     const encKey = computeEncKey(password, O, perms, fileId, keyLen, rVal);
     console.log('[decrypt] ✅ Password verified');
 
-    // Decrypt all streams (RC4 is symmetric)
-    let result = '';
-    let pos = 0;
-    const objRegex = /(\d+) (\d+) obj\b/g;
-    let m;
-    while ((m = objRegex.exec(pdfStr)) !== null) {
-        const objNum = parseInt(m[1]), gen = parseInt(m[2]);
-        const objStart = m.index;
-        const endObjIdx = pdfStr.indexOf('endobj', objStart + m[0].length);
+    // ── Decrypt using Buffer operations (not string) ──────────────────────────
+    // Convert to buffer for proper binary handling
+    const pdfBuf = encryptedBuf;
+    const pdfLen = pdfBuf.length;
+
+    // Find all objects using Buffer.indexOf
+    const objPattern = /(\d+) (\d+) obj\b/g;
+    const objects = [];
+    let match;
+
+    while ((match = objPattern.exec(pdfStr)) !== null) {
+        objects.push({
+            objNum: parseInt(match[1]),
+            gen: parseInt(match[2]),
+            start: match.index,
+            headerEnd: match.index + match[0].length
+        });
+    }
+
+    console.log('[decrypt] Total objects found:', objects.length);
+
+    // Build decrypted buffer
+    const chunks = [];
+    let lastPos = 0;
+
+    for (const obj of objects) {
+        const objStart = obj.start;
+        const endObjStr = 'endobj';
+        const endObjIdx = pdfStr.indexOf(endObjStr, obj.headerEnd);
         if (endObjIdx === -1) continue;
-        const objBody = pdfStr.slice(objStart, endObjIdx + 6);
-        const streamMarker = objBody.match(/\bstream\r?\n/);
-        if (!streamMarker) continue;
-        const streamStart  = objStart + streamMarker.index + streamMarker[0].length;
+
+        const objBodyStr = pdfStr.slice(objStart, endObjIdx + endObjStr.length);
+
+        // Check for stream
+        const streamMatch = objBodyStr.match(/\bstream\r?\n/);
+        if (!streamMatch) continue;
+
+        const streamStartInObj = streamMatch.index + streamMatch[0].length;
+        const streamStart = objStart + streamStartInObj;
         const endStreamIdx = pdfStr.indexOf('\nendstream', streamStart);
         if (endStreamIdx === -1) continue;
 
-        result += pdfStr.slice(pos, streamStart);
-        const encStream = Buffer.from(pdfStr.slice(streamStart, endStreamIdx), 'latin1');
-        result += rc4(getObjKey(encKey, objNum, gen), encStream).toString('latin1');
-        pos = endStreamIdx;
+        // Add content before stream
+        chunks.push(Buffer.from(pdfStr.slice(lastPos, streamStart), 'latin1'));
+
+        // Decrypt stream
+        const encStreamBuf = Buffer.from(
+            pdfStr.slice(streamStart, endStreamIdx),
+            'latin1'
+        );
+
+        const objKey = getObjKey(encKey, obj.objNum, obj.gen);
+        const decStreamBuf = rc4(objKey, encStreamBuf);
+
+        chunks.push(decStreamBuf);
+        lastPos = endStreamIdx;
     }
 
-    // Append rest, strip /Encrypt reference
-    let rest = pdfStr.slice(pos);
-    rest = rest.replace(/\/Encrypt \d+ \d+ R\s*\n?/g, '');
-    result += rest;
+    // Add remaining content
+    let remaining = pdfStr.slice(lastPos);
 
-    return Buffer.from(result, 'latin1');
+    // Remove /Encrypt reference from trailer
+    remaining = remaining.replace(/\/Encrypt \d+ \d+ R\s*/g, '');
+
+    chunks.push(Buffer.from(remaining, 'latin1'));
+
+    // Combine all chunks
+    let decryptedBuf = Buffer.concat(chunks);
+
+    console.log('[decrypt] Raw decrypted size:', decryptedBuf.length);
+
+    // Remove encrypt dictionary object
+    let decryptedStr = decryptedBuf.toString('latin1');
+    decryptedStr = decryptedStr.replace(
+        /\d+ 0 obj[\s\S]*?\/Filter\s*\/Standard[\s\S]*?endobj[\r\n]*/g,
+        ''
+    );
+
+    decryptedBuf = Buffer.from(decryptedStr, 'latin1');
+    console.log('[decrypt] Final decrypted size:', decryptedBuf.length);
+
+    // Rebuild with pdf-lib to create clean PDF
+    try {
+        const pdfDoc = await PDFDocument.load(decryptedBuf, {
+            ignoreEncryption: true,
+            throwOnInvalidObject: false
+        });
+
+        const pageCount = pdfDoc.getPageCount();
+        console.log('[decrypt] Pages:', pageCount);
+
+        // Create new clean PDF with embedded pages
+        const cleanDoc = await PDFDocument.create();
+        const embeddedPages = await cleanDoc.embedPdf(
+            decryptedBuf,
+            Array.from({ length: pageCount }, (_, i) => i)
+        );
+
+        for (const ep of embeddedPages) {
+            const page = cleanDoc.addPage([ep.width, ep.height]);
+            page.drawPage(ep);
+        }
+
+        const cleanBytes = await cleanDoc.save();
+        console.log('[decrypt] ✅ Clean PDF created, size:', cleanBytes.length);
+        return Buffer.from(cleanBytes);
+
+    } catch(err) {
+        console.log('[decrypt] pdf-lib rebuild failed:', err.message);
+        return decryptedBuf;
+    }
 }
 
 // ── CHECK ─────────────────────────────────────────────────────────────────────
 function isPDFEncrypted(buf) {
-    const s = buf.toString('latin1', 0, Math.min(buf.length, 50000));
-    return s.includes('/Filter /Standard') || /\/Encrypt[\s\n\/\[<]/.test(s);
+    const s = buf.toString('latin1');
+    const hasStandard = s.includes('/Filter /Standard');
+    const hasEncrypt = /\/Encrypt[\s\n\/\[<]/.test(s);
+    const hasEncryptRef = /\/Encrypt \d+ \d+ R/.test(s);
+    console.log('[isPDFEncrypted] hasStandard:', hasStandard, '| hasEncrypt:', hasEncrypt, '| hasEncryptRef:', hasEncryptRef);
+    return hasStandard || hasEncrypt || hasEncryptRef;
 }
 
 module.exports = { encryptPDFBuffer, decryptPDFBuffer, isPDFEncrypted };
